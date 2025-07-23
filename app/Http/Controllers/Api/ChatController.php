@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Log;
 class ChatController extends Controller
 {
     private $userService,
-            $chatService,
-            $orderService;
+        $chatService,
+        $orderService;
 
     public function __construct(UserService $userService, ChatService $chatService, OrderService $orderService)
     {
@@ -29,7 +29,7 @@ class ChatController extends Controller
         $this->orderService = $orderService;
     }
 
-   public function assignAgent(AssignAgentRequest $request)
+    public function assignAgent(AssignAgentRequest $request)
     {
         try {
 
