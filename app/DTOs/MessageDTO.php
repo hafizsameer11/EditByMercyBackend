@@ -1,0 +1,94 @@
+<?php
+
+
+namespace App\DTOs;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+
+class MessageDTO
+{
+    public function __construct(
+        public int $chat_id,
+        public int $sender_id,
+        public ?int $receiver_id = null,
+        public string $type = 'text',
+        public ?string $message = null,
+        public ?string $file = null,
+        public ?int $duration = null,
+        public ?int $order_id = null,
+        public bool $is_forwarded = false,
+        public ?int $original_id = null,
+    ) {}
+
+    public static function fromRequest(Request $request): self
+    {
+        $imagePath = null;
+
+        if ($request->hasFile('file')) {
+            $imagePath = $request->file('file')->store('chat_images', 'public');
+        }
+
+        return new self(
+            chat_id: $request->get('chat_id'),
+            sender_id: Auth::id(),
+            receiver_id: $request->get('receiver_id'),
+            type: $request->get('type', 'text'),
+            message: $request->get('message'),
+            file: $imagePath,
+            duration: $request->get('duration'),
+            order_id: $request->get('order_id'),
+            is_forwarded: $request->boolean('is_forwarded', false),
+            original_id: $request->get('original_id'),
+        );
+    }
+
+    public static function fromForwardedMessage(\App\Models\Message $original, int $chat_id, int $sender_id): self
+    {
+        return new self(
+            chat_id: $chat_id,
+            sender_id: $sender_id,
+            receiver_id: null,
+            type: $original->type,
+            message: $original->message,
+            file: $original->file,
+            duration: $original->duration,
+            order_id: $original->order_id,
+            is_forwarded: true,
+            original_id: $original->id
+        );
+    }
+
+    public static function fromForwardedOrder(\App\Models\Order $order, int $chat_id, int $sender_id): self
+    {
+        return new self(
+            chat_id: $chat_id,
+            sender_id: $sender_id,
+            receiver_id: null,
+            type: 'order',
+            message: null,
+            file: null,
+            duration: null,
+            order_id: $order->id,
+            is_forwarded: true,
+            original_id: null // no original message here, just order
+        );
+    }
+
+    public function toArray(): array
+    {
+        return array_filter([
+            'chat_id' => $this->chat_id,
+            'sender_id' => $this->sender_id,
+            'receiver_id' => $this->receiver_id,
+            'type' => $this->type,
+            'message' => $this->message,
+            'image' => $this->file,
+            'duration' => $this->duration,
+            'order_id' => $this->order_id,
+            'is_forwarded' => $this->is_forwarded,
+            'original_id' => $this->original_id,
+        ], fn($v) => $v !== null);
+    }
+}
