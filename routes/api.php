@@ -21,6 +21,6 @@ Route::prefix('auth')->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/assign-agent', [\App\Http\Controllers\Api\ChatController::class, 'assignAgent']);
 });
-Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [\App\Http\Controllers\Admin\UserController::class, 'createUser']);
 });

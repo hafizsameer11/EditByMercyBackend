@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
-              $table->id();
+            $table->id();
 
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
             $table->decimal('amount', 10, 2);
@@ -20,8 +20,12 @@ return new class extends Migration
             $table->string('service_type'); // e.g., "editing", "retouching"
 
 
-            $table->timestamps();      
-          });
+            $table->timestamps();
+        });
+        Schema::table('orders', function (Blueprint $table) {
+            $table->foreignId('chat_id')->nullable()->constrained('chats')->nullOnDelete();
+            // $table->foreignId('transaction_id')->nullable()->constrained('transactions')->nullOnDelete();
+        });
     }
 
 

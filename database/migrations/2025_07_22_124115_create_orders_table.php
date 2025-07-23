@@ -25,7 +25,6 @@ return new class extends Migration
             $table->foreign('agent_id')->references('id')->on('users')->onDelete('set null');
             $table->string('payment_status')->default('unpaid'); // Example payment status field
             $table->string('txn')->nullable(); // Example transaction ID field
-                $table->foreignId('chat_id')->nullable()->constrained()->nullOnDelete();
 
             // Add any other fields you need for the orders table
             $table->timestamps();
