@@ -64,6 +64,22 @@ public function sendMessage(SendMessageRequest $sendMessageRequest)
         return ResponseHelper::error('An error occurred while sending the message.', 500);
     }
 }
+public function getChatMessages(Request $request, $chatId){
+    try {
+        $chat = $this->chatService->getChatById($chatId);
+        if (!$chat) {
+            return ResponseHelper::error('Chat not found.', 404);
+        }
+        $messages = $chat->messages()->with(['sender', 'receiver', 'originalMessage'])->get();
+        return ResponseHelper::success(MessageResource::collection($messages), 'Chat messages fetched successfully.');
+    }catch (\Exception $e) {
+        Log::error('Error fetching chat messages: ' . $e->getMessage(), [
+            'user_id' => Auth::id(),
+            'chat_id' => $chatId,
+        ]);
+        return ResponseHelper::error('An error occurred while fetching chat messages.', 500);
+    }
+}
 
     public function assignAgent(AssignAgentRequest $request)
     {

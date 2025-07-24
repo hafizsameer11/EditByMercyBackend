@@ -42,6 +42,14 @@ class ChatService
             throw $e;
         }
     }
+    public function getChatById(int $id)
+    {
+        try {
+            return $this->chatRepository->getChatById($id);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
 
     public function sendMessage(int $chatId, MessageDTO $messageData)
     {
