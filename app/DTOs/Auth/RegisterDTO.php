@@ -12,7 +12,8 @@ class RegisterDTO
         public string $email,
         public string $password,
         public string $role,
-        public ?string $profile_picture = null
+        public ?string $profile_picture = null,
+        public ?string $phone = null,
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -25,6 +26,7 @@ class RegisterDTO
             profile_picture: $request->hasFile('profile_picture')
                 ? $request->file('profile_picture')->store('profiles', 'public')
                 : null,
+            phone: $request->input('phone', null),
         );
     }
     public function toArray(): array

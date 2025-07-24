@@ -27,7 +27,8 @@ class User extends Authenticatable
         'is_verified',
         'is_blocked',
         'otp',
-        'profile_picture'
+        'profile_picture',
+        'phone',
     ];
 
     /**

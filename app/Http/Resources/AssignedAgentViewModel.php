@@ -42,7 +42,7 @@ class AssignedAgentViewModel extends JsonResource
             }),
 
             'order' => $this->order ? [
-                'id' => $this->order->id ?? null, 
+                'id' => $this->order->id ?? null,
                 'status' => $this->order->status ?? null,
                 'amount' => $this->order->total_amount ?? null,
                 'service_type' => $this->order->service_type ?? null,

@@ -29,7 +29,8 @@ class RegisterRequest extends FormRequest
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'min:6'],
             'role' => ['nullable', 'in:admin,support,editor,chief_editor,user'],
-            'profile_picture' => 'nullable'
+            'profile_picture' => 'nullable',
+            'phone'=>'nullable'
         ];
     }
     protected function failedValidation(Validator $validator)

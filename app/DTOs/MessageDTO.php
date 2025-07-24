@@ -5,12 +5,13 @@ namespace App\DTOs;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class MessageDTO
 {
     public function __construct(
-        public int $chat_id,
+        public ?int $chat_id=null,
         public int $sender_id,
         public ?int $receiver_id = null,
         public string $type = 'text',
@@ -25,8 +26,15 @@ class MessageDTO
     public static function fromRequest(Request $request): self
     {
         $imagePath = null;
-
+        Log::info('Creating MessageDTO from request', [
+            'user_id' => Auth::id(),
+            'request_data' => $request->all(),
+        ]);
         if ($request->hasFile('file')) {
+            Log::info('File upload detected', [
+                'user_id' => Auth::id(),
+                'file_name' => $request->file('file')->getClientOriginalName(),
+            ]);
             $imagePath = $request->file('file')->store('chat_images', 'public');
         }
 
@@ -70,7 +78,7 @@ class MessageDTO
             message: null,
             file: null,
             duration: null,
-        order_id: $order->id ?? null,
+            order_id: $order->id ?? null,
             is_forwarded: true,
             original_id: null // no original message here, just order
         );
@@ -84,11 +92,21 @@ class MessageDTO
             'receiver_id' => $this->receiver_id,
             'type' => $this->type,
             'message' => $this->message,
-            'image' => $this->file,
+            'file' => $this->file,
             'duration' => $this->duration,
             'order_id' => $this->order_id,
             'is_forwarded' => $this->is_forwarded,
             'original_id' => $this->original_id,
         ], fn($v) => $v !== null);
+    }
+    public function withReceiverId(int $receiverId): self
+    {
+        $this->receiver_id = $receiverId;
+        return $this;
+    }
+    public function withChatId(int $chatId): self
+    {
+        $this->chat_id = $chatId;
+        return $this;
     }
 }

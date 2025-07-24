@@ -29,4 +29,12 @@ class ChatRepository
     {
         return Chat::where('user_id', $userId)->with('messages', 'participantA', 'participantB', 'agent')->get();
     }
+    public function sendMessage(int $chatId, array $messageData)
+    {
+        $chat = $this->getChatById($chatId);
+        if ($chat) {
+            return $chat->messages()->create($messageData);
+        }
+        throw new \Exception('Chat not found');
+    }
 }

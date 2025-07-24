@@ -19,6 +19,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 });
 Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/send-message', [\App\Http\Controllers\Api\ChatController::class, 'sendMessage']);
     Route::post('/assign-agent', [\App\Http\Controllers\Api\ChatController::class, 'assignAgent']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {

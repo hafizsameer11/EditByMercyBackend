@@ -13,7 +13,7 @@ class SendMessageRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,15 +24,17 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'chat_id'=>'required',
-            'message'=>'nullable',
-            'file'=>'nullable',
-            'order_id'=>'nullable',
-            'is_forwarded'=>'nullable',
-            'type'=>'required'
+            'chat_id' => 'required|exists:chats,id',
+            'type' => 'required|in:text,image,file,voice,order',
+            'message' => 'nullable|string',
+            'file' => 'nullable|file|max:10240', // Max 10MB
+            'duration' => 'nullable|integer',
+            'order_id' => 'nullable|exists:orders,id',
+            'is_forwarded' => 'nullable|boolean',
+            'original_id' => 'nullable|exists:messages,id',
         ];
     }
-        protected function failedValidation(Validator $validator)
+    protected function failedValidation(Validator $validator)
     {
         // Throw a JSON response when validation fails
         throw new HttpResponseException(
@@ -43,5 +45,4 @@ class SendMessageRequest extends FormRequest
             ], 422)
         );
     }
-    
 }

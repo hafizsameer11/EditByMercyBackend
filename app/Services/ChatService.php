@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DTOs\ChatDTO;
+use App\DTOs\MessageDTO;
 use App\Models\Chat;
 use App\Repositories\ChatRepository;
 use Exception;
@@ -37,6 +38,15 @@ class ChatService
             })
                 ->where('type', 'user-agent')
                 ->first();
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function sendMessage(int $chatId, MessageDTO $messageData)
+    {
+        try {
+            return $this->chatRepository->sendMessage($chatId, $messageData->toArray());
         } catch (Exception $e) {
             throw $e;
         }
