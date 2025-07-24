@@ -21,10 +21,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/send-message', [\App\Http\Controllers\Api\ChatController::class, 'sendMessage']);
     Route::post('/assign-agent', [\App\Http\Controllers\Api\ChatController::class, 'assignAgent']);
-    // Route::get('/chats', [\App\Http\Controllers\Api\ChatController::class, 'getChats']);
     Route::get('/chat/{id}', [\App\Http\Controllers\Api\ChatController::class, 'getChatMessages']);
-    // Route::get('/assigned-agents', [\App\Http\Controllers\Api\ChatController::class, 'getAssignedAgents']);
-    // Route::get('/chat-messages/{chatId}', [\App\Http\Controllers\Api\ChatController::class, 'getChatMessages']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [\App\Http\Controllers\Admin\UserController::class, 'createUser']);
