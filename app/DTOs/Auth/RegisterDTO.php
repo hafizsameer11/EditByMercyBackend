@@ -37,6 +37,7 @@ class RegisterDTO
         'password' => $this->password,
         'role' => $this->role,
         'profile_picture' => $this->profile_picture,
+        'phone' => $this->phone,
     ];
 }
 }
