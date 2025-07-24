@@ -8,6 +8,7 @@ use App\Enums\UserRoles;
 use App\Helpers\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignAgentRequest;
+use App\Http\Resources\AssignedAgentViewModel;
 use App\Models\User;
 use App\Services\ChatService;
 use App\Services\OrderService;
@@ -29,44 +30,81 @@ class ChatController extends Controller
         $this->orderService = $orderService;
     }
 
-    public function assignAgent(AssignAgentRequest $request)
-    {
-        try {
+   public function assignAgent(AssignAgentRequest $request)
+{
+    try {
+        $authUserId = Auth::id();
+        $serviceType = $request->input('service_type');
 
-            $agent = $this->userService->getSupportAgent();
-            $chatDto = new ChatDTO(
-                type: 'user-agent',
-                user_id: Auth::id(),
-                user_2_id: $agent->id,
-                agent_id: $agent->id
-            );
+        // 1. Get agent
+        $agent = $this->userService->getSupportAgent();
 
-            $chat = $this->chatService->createChat($chatDto);
-            $ordDTO = new OrderDTO(
-                user_id: Auth::id(),
-                agent_id: $agent->id,
-                service_type: $request->input('service_type'),
-                chat_id: $chat->id
-            );
-            $order = $this->orderService->createOrder($ordDTO);
-            // $chat->
-            $data = $chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
-            return ResponseHelper::success(
-                'Agent assigned successfully.',
-                $data,
-                201
-            );
-        } catch (\Exception $e) {
-            Log::error('Error assigning agent: ' . $e->getMessage(), [
-                'user_id' => Auth::id(),
-                'request_data' => $request->all(),
-            ]);
-            return ResponseHelper::error(
-                'An error occurred while assigning the agent.',
-                500,
+        // 2. Check if chat exists between the two
+        $chat = $this->chatService->findChatBetweenUsers($authUserId, $agent->id ?? null);
 
-            );
-            //   return response()->json(['error' => 'An error occurred while assigning the agent.'], 500);
+        // If chat exists
+        if ($chat) {
+            // Check if it has a pending order with the same service type
+            $pendingOrder = $chat->order()
+                ->where('service_type', $serviceType)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($pendingOrder) {
+                // Return the existing chat with loaded relationships
+                $data = $chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
+                return ResponseHelper::success(new AssignedAgentViewModel($data), 'Existing pending order chat found.', 200);
+            }
+
+            // Check if chat has successful order
+            $successfulOrder = $chat->order()
+                ->where('service_type', $serviceType)
+                ->where('status', 'success')
+                ->first();
+
+            if ($successfulOrder) {
+                // Create new order inside same chat
+                $newOrderDTO = new OrderDTO(
+                    user_id: $authUserId,
+                    agent_id: $agent->id ?? null,
+                    service_type: $serviceType,
+                    chat_id: $chat->id ?? null
+                );
+                $this->orderService->createOrder($newOrderDTO);
+
+                $data = $chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
+                return ResponseHelper::success(new AssignedAgentViewModel($data), 'New order created in existing chat.', 201);
+            }
         }
+
+        // If no existing chat or suitable order, create new chat
+        $chatDto = new ChatDTO(
+            type: 'user-agent',
+            user_id: $authUserId,
+            user_2_id: $agent->id ?? null,
+            agent_id: $agent->id ?? null
+        );
+        $chat = $this->chatService->createChat($chatDto);
+
+        $orderDto = new OrderDTO(
+            user_id: $authUserId,
+            agent_id: $agent->id ?? null,
+            service_type: $serviceType,
+            chat_id: $chat->id ?? null
+        );
+        $this->orderService->createOrder($orderDto);
+
+        $data = $chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
+        return ResponseHelper::success(new AssignedAgentViewModel($data), 'New chat and order created.', 201);
+
+    } catch (\Exception $e) {
+        Log::error('Error assigning agent: ' . $e->getMessage(), [
+            'user_id' => Auth::id(),
+            'request_data' => $request->all(),
+        ]);
+
+        return ResponseHelper::error('An error occurred while assigning the agent.', 500);
     }
+}
+
 }

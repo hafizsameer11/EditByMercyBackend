@@ -50,13 +50,13 @@ class MessageDTO
             chat_id: $chat_id,
             sender_id: $sender_id,
             receiver_id: null,
-            type: $original->type,
-            message: $original->message,
-            file: $original->file,
-            duration: $original->duration,
-            order_id: $original->order_id,
+            type: $original->type ?? 'text',
+            message: $original->message ?? null,
+            file: $original->file ?? null,
+            duration: $original->duration ?? null,
+            order_id: $original->order_id ?? null,
             is_forwarded: true,
-            original_id: $original->id
+            original_id: $original->id ?? null
         );
     }
 
@@ -70,7 +70,7 @@ class MessageDTO
             message: null,
             file: null,
             duration: null,
-            order_id: $order->id,
+        order_id: $order->id ?? null,
             is_forwarded: true,
             original_id: null // no original message here, just order
         );
