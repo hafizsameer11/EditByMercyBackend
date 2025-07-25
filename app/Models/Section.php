@@ -6,10 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Section extends Model
 {
-     protected $fillable = ['title'];
+    protected $fillable = ['title','form_id'];
 
     public function questions()
     {
         return $this->hasMany(Question::class);
+    }
+    public function form()
+    {
+        $this->belongsTo(Form::class, 'form_id');
     }
 }
