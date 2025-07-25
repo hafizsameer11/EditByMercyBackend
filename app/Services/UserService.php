@@ -9,6 +9,7 @@ use App\DTOs\Auth\RegisterDTO;
 use App\DTOs\Auth\VerifyCodeDTO;
 use App\Enums\UserRoles;
 use App\Mail\ForgotPasswordOtpMail;
+use App\Models\User;
 use App\Repositories\UserRepository;
 use Exception;
 use Illuminate\Support\Facades\Hash;
@@ -22,7 +23,7 @@ class UserService
     {
         $this->userRepo = $userRepo;
     }
-    public function register(RegisterDTO $registerDTO)
+    public function register(RegisterDTO $registerDTO):User
     {
         try {
             $user = $this->userRepo->createUser($registerDTO->toArray());
@@ -129,4 +130,9 @@ class UserService
             return $e;
         }
     }
+    public function getAllWithNonUserRoles()
+{
+    return User::where('role', '!=', 'user')->get();
+}
+
 }

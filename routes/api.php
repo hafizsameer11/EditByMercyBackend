@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ChatController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -19,10 +21,11 @@ Route::prefix('auth')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 });
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/send-message', [\App\Http\Controllers\Api\ChatController::class, 'sendMessage']);
-    Route::post('/assign-agent', [\App\Http\Controllers\Api\ChatController::class, 'assignAgent']);
-    Route::get('/chat/{id}', [\App\Http\Controllers\Api\ChatController::class, 'getChatMessages']);
+    Route::post('/send-message', [ChatController::class, 'sendMessage']);
+    Route::post('/assign-agent', [ChatController::class, 'assignAgent']);
+    Route::get('/chat/{id}', [ChatController::class, 'getChatMessages']);
+    Route::get('/chats', [ChatController::class, 'getChats']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
-    Route::post('/create-user', [\App\Http\Controllers\Admin\UserController::class, 'createUser']);
+    Route::post('/create-user', [UserController::class, 'createUser']);
 });

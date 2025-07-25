@@ -25,8 +25,6 @@ class ChatService
         } catch (Exception $e) {
             throw $e;
         }
-
-        // Logic to create a chat
     }
     public function findChatBetweenUsers($userId, $agentId)
     {
@@ -59,4 +57,34 @@ class ChatService
             throw $e;
         }
     }
+    public function getChatByUserId(int $userId)
+    {
+        try {
+            return $this->chatRepository->getChatByUserId($userId);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function createChatIfNotExists($user, $otherUser)
+{
+    $existingChat = Chat::where(function ($query) use ($user, $otherUser) {
+        $query->where('user_id', $user->id)
+              ->where('user_2_id', $otherUser->id);
+    })->orWhere(function ($query) use ($user, $otherUser) {
+        $query->where('user_id', $otherUser->id)
+              ->where('user_2_id', $user->id);
+    })->first();
+
+    if (!$existingChat) {
+        return Chat::create([
+            'user_id' => $user->id,
+            'user_2_id' => $otherUser->id,
+            'agent_id' => null,
+            'type' => 'agent-agent',
+        ]);
+    }
+
+    return $existingChat;
+}
 }

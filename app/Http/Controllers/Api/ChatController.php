@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignAgentRequest;
 use App\Http\Requests\SendMessageRequest;
 use App\Http\Resources\AssignedAgentViewModel;
+use App\Http\Resources\ChatResource;
 use App\Http\Resources\MessageResource;
 use App\Models\User;
 use App\Services\ChatService;
@@ -32,54 +33,55 @@ class ChatController extends Controller
         $this->chatService = $chatService;
         $this->orderService = $orderService;
     }
-public function sendMessage(SendMessageRequest $sendMessageRequest)
-{
-    try {
-        $chatId = $sendMessageRequest->get('chat_id');
+    public function sendMessage(SendMessageRequest $sendMessageRequest)
+    {
+        try {
+            $chatId = $sendMessageRequest->get('chat_id');
 
-        // Get chat participants
-        $chat = \App\Models\Chat::findOrFail($chatId);
+            // Get chat participants
+            $chat = \App\Models\Chat::findOrFail($chatId);
 
-        // Determine receiver: if sender is user_id then receiver is user_2_id, and vice versa
-        $receiverId = $chat->user_id === Auth::id()
-            ? $chat->user_2_id
-            : $chat->user_id;
+            // Determine receiver: if sender is user_id then receiver is user_2_id, and vice versa
+            $receiverId = $chat->user_id === Auth::id()
+                ? $chat->user_2_id
+                : $chat->user_id;
 
-        // Build DTO and attach receiver ID dynamically
-        $messageDto = MessageDTO::fromRequest($sendMessageRequest)
-            ->withReceiverId($receiverId);
+            // Build DTO and attach receiver ID dynamically
+            $messageDto = MessageDTO::fromRequest($sendMessageRequest)
+                ->withReceiverId($receiverId);
 
-        $message = $this->chatService->sendMessage($chatId, $messageDto);
+            $message = $this->chatService->sendMessage($chatId, $messageDto);
 
-        // Load necessary relationships
-        $message->load('sender', 'receiver', 'originalMessage');
+            // Load necessary relationships
+            $message->load('sender', 'receiver', 'originalMessage');
 
-        return ResponseHelper::success(new MessageResource($message), 'Message sent successfully.', 201);
-    } catch (\Exception $e) {
-        Log::error('Error sending message: ' . $e->getMessage(), [
-            'user_id' => Auth::id(),
-            'request_data' => $sendMessageRequest->all(),
-        ]);
+            return ResponseHelper::success(new MessageResource($message), 'Message sent successfully.', 201);
+        } catch (\Exception $e) {
+            Log::error('Error sending message: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $sendMessageRequest->all(),
+            ]);
 
-        return ResponseHelper::error('An error occurred while sending the message.', 500);
-    }
-}
-public function getChatMessages(Request $request, $chatId){
-    try {
-        $chat = $this->chatService->getChatById($chatId);
-        if (!$chat) {
-            return ResponseHelper::error('Chat not found.', 404);
+            return ResponseHelper::error('An error occurred while sending the message.', 500);
         }
-        $messages = $chat->messages()->with(['sender', 'receiver', 'originalMessage'])->get();
-        return ResponseHelper::success(MessageResource::collection($messages), 'Chat messages fetched successfully.');
-    }catch (\Exception $e) {
-        Log::error('Error fetching chat messages: ' . $e->getMessage(), [
-            'user_id' => Auth::id(),
-            'chat_id' => $chatId,
-        ]);
-        return ResponseHelper::error('An error occurred while fetching chat messages.', 500);
     }
-}
+    public function getChatMessages($chatId)
+    {
+        try {
+            $chat = $this->chatService->getChatById($chatId);
+            if (!$chat) {
+                return ResponseHelper::error('Chat not found.', 404);
+            }
+            $messages = $chat->messages()->with(['sender', 'receiver', 'originalMessage'])->get();
+            return ResponseHelper::success(MessageResource::collection($messages), 'Chat messages fetched successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error fetching chat messages: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'chat_id' => $chatId,
+            ]);
+            return ResponseHelper::error('An error occurred while fetching chat messages.', 500);
+        }
+    }
 
     public function assignAgent(AssignAgentRequest $request)
     {
@@ -154,6 +156,18 @@ public function getChatMessages(Request $request, $chatId){
             ]);
 
             return ResponseHelper::error('An error occurred while assigning the agent.', 500);
+        }
+    }
+    public function getChats(){
+        try {
+            $userId = Auth::id();
+            $chats = $this->chatService->getChatByUserId($userId);
+            return ResponseHelper::success(ChatResource::collection($chats), 'Chats fetched successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error fetching chats: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+            ]);
+            return ResponseHelper::error('An error occurred while fetching chats.', 500);
         }
     }
 }
