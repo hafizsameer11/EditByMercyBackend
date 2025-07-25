@@ -62,7 +62,6 @@ public function getQuestionnaire()
             $q->with('options');
         }
     ])
-    ->whereNull('deleted_at') // Optional: only get non-deleted sections
     ->orderBy('order') // if you have order column
     ->get();
 
