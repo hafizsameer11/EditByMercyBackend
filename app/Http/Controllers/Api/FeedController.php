@@ -43,7 +43,9 @@ class FeedController extends Controller
             ];
         });
 
-        return response()->json(['feeds' => $feeds,'feedCategories'=>$feedCategories], 200);
+        return response()->json(['data'=>[
+            'feeds' => $feeds,'feedCategories'=>$feedCategories
+        ]], 200);
     }
 
     public function store(Request $request)
