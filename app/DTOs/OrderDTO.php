@@ -61,6 +61,14 @@ class OrderDTO
             delivery_date: $request->input('delivery_date'),
         );
     }
+    public static function getPaymentDetails(Request $request): self{
+        return new self(
+             total_amount: $request->input('total_amount'),
+            no_of_photos: $request->input('no_of_photos'),
+            delivery_date: $request->input('delivery_date'),
+        );
+
+    }
 
     public static function fromUserPayment(Request $request): self
     {

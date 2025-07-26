@@ -26,10 +26,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/assign-agent', [ChatController::class, 'assignAgent']);
     Route::get('/chat/{id}', [ChatController::class, 'getChatMessages']);
     Route::get('/chats', [ChatController::class, 'getChats']);
+    //routes for questionare for user and agent
+    Route::post('questionnaire/assign', [QuestionareController::class, 'assignToUser']);
+    Route::post('questionnaire/user/section', [QuestionareController::class, 'submitSection']);
+    Route::post('questionnaire/user/answers', [QuestionareController::class, 'getUserAnswers']);
+    Route::post('questionnaire/assignment/close', [QuestionareController::class, 'closeAssignment']);
+    Route::post('questionnaire/assignment/reopen', [QuestionareController::class, 'reopenAssignment']);
+    Route::get('questionnaire/assignment/answers/{user_id}', [QuestionareController::class, 'getAnswersByUser']);
+    Route::get('questionnaire/assignment/progress/{assignment_id}', [QuestionareController::class, 'getAssignmentProgress']);
+    Route::get('/questionnaire/get-assigned-form', [QuestionareController::class, 'getAssignedForm']); //for user to get assigned form
+
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [UserController::class, 'createUser']);
     Route::post('/questionnaire', [QuestionareController::class, 'storeOrUpdateQuestionnaire']);
     Route::get('questionnaire', [QuestionareController::class, 'getQuestionnaire']);
-
 });
+
+// for messages first call /assign-agent then call /send-message and for chat details you can use /chat/{id} and for all chats you can use /chats
