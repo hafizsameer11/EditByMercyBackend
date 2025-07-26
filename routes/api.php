@@ -36,8 +36,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('questionnaire/assignment/reopen', [QuestionareController::class, 'reopenAssignment']);
     Route::get('questionnaire/assignment/answers/{user_id}', [QuestionareController::class, 'getAnswersByUser']);
     Route::get('questionnaire/assignment/progress/{assignment_id}', [QuestionareController::class, 'getAssignmentProgress']);
-    Route::get('/questionnaire/get-assigned-form', [QuestionareController::class, 'getAssignedForm']); //for user to get assigned form
-
+    Route::get('questionnaire/get-assigned-form', [QuestionareController::class, 'getAssignedForm']);
     //quick reply 
     Route::get('/quick-replies', [QuickReplyController::class, 'index']);
     Route::post('/quick-replies', [QuickReplyController::class, 'store']);
