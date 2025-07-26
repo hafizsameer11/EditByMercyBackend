@@ -23,4 +23,12 @@ class OrderService
             throw $e;
         }
     }
+    public function createPayment(array $data){
+        try {
+            $payment = $this->orderRepository->createPayment($data);
+            return $payment;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
 }

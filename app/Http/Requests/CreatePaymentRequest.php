@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class CreatePaymentRequest extends FormRequest
 {
@@ -22,7 +24,22 @@ class CreatePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            
+            'chat_id'=>'required|exists:chats,id',
+            'total_amount'=>'required',
+            'no_of_photos'=>'required'
+
         ];
+    }
+
+        protected function failedValidation(Validator $validator)
+    {
+        // Throw a JSON response when validation fails
+        throw new HttpResponseException(
+            response()->json([
+                'status' => 'error',
+                'data' => $validator->errors(),
+                'message' => $validator->errors()->first()
+            ], 422)
+        );
     }
 }

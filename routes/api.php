@@ -49,7 +49,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/assign-agent', [ChatController::class, 'assignAgent']);
     Route::get('/chat/{id}', [ChatController::class, 'getChatMessages']);
     Route::get('/chats', [ChatController::class, 'getChats']);
+    //routes for handling payment with order
+    Route::post('/create-payment',[ChatController::class,'createPayment']);
+    // Route::post('/check-current-order')
     //routes for questionare for user and agent
+
     Route::post('questionnaire/assign', [QuestionareController::class, 'assignToUser']);
     Route::post('questionnaire/user/section', [QuestionareController::class, 'submitSection']);
     Route::post('questionnaire/user/answers', [QuestionareController::class, 'getUserAnswers']);

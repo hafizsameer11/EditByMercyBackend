@@ -9,10 +9,12 @@ use App\Enums\UserRoles;
 use App\Helpers\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignAgentRequest;
+use App\Http\Requests\CreatePaymentRequest;
 use App\Http\Requests\SendMessageRequest;
 use App\Http\Resources\AssignedAgentViewModel;
 use App\Http\Resources\ChatResource;
 use App\Http\Resources\MessageResource;
+use App\Models\Order;
 use App\Models\User;
 use App\Services\ChatService;
 use App\Services\OrderService;
@@ -73,7 +75,11 @@ class ChatController extends Controller
                 return ResponseHelper::error('Chat not found.', 404);
             }
             $messages = $chat->messages()->with(['sender', 'receiver', 'originalMessage'])->get();
-            return ResponseHelper::success(MessageResource::collection($messages), 'Chat messages fetched successfully.');
+            $order=Order::where('chat_id','=',$chatId)->first();
+            return ResponseHelper::success([
+                'order'=>$order,
+                'messages' => MessageResource::collection($messages),
+            ], 'Chat messages fetched successfully.');
         } catch (\Exception $e) {
             Log::error('Error fetching chat messages: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
@@ -168,6 +174,21 @@ class ChatController extends Controller
                 'user_id' => Auth::id(),
             ]);
             return ResponseHelper::error('An error occurred while fetching chats.', 500);
+        }
+    }
+    public function createPayment(CreatePaymentRequest $request){
+        try {
+            // $dto = CreatePaymentDTO::fromRequest($request);
+            $data=$request->validated();
+            $payment = $this->orderService->createPayment($data);
+            // $payment = $this->paymentService->createPayment($dto);
+            return ResponseHelper::success($payment, 'Payment created successfully.', 201);
+        } catch (\Exception $e) {
+            Log::error('Error creating payment: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+            ]);
+            return ResponseHelper::error('An error occurred while creating the payment.', 500);
         }
     }
 }
