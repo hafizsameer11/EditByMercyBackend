@@ -52,7 +52,7 @@ class FeedController extends Controller
         $validated = $request->validate([
             'category_id' => 'nullable|exists:feed_categories,id',
             'caption' => 'nullable|string|max:255',
-            'featured_image' => 'nullable|string',
+            'featured_image' => 'nullable',
         ]);
 
         // Save image
