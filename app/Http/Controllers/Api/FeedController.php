@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Feed;
+use App\Models\FeedCategory;
 use App\Models\FeedLike;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +31,7 @@ class FeedController extends Controller
     public function index(Request $request)
     {
         $feeds = Feed::with('category', 'likes')->latest()->get();
-
+        $feedCategories=FeedCategory::all();
         $feeds = $feeds->map(function ($feed) use ($request) {
             return [
                 'id' => $feed->id,
@@ -42,7 +43,7 @@ class FeedController extends Controller
             ];
         });
 
-        return response()->json(['feeds' => $feeds]);
+        return response()->json(['feeds' => $feeds,'feedCategories'=>$feedCategories], 200);
     }
 
     public function store(Request $request)
