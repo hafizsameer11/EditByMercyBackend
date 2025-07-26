@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Feed extends Model
 {
-     protected $fillable = ['admin_id', 'category_id', 'caption', 'before_image', 'after_image'];
+     protected $fillable = ['admin_id', 'category_id', 'caption', 'featured_image'];
 
     public function category() {
         return $this->belongsTo(FeedCategory::class);

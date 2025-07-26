@@ -18,8 +18,9 @@ return new class extends Migration
             $table->unsignedBigInteger('category_id')->nullable();
             $table->foreign('category_id')->references('id')->on('feed_categories')->onDelete('set null')->nullable();
             $table->string('caption')->nullable();
-            $table->string('before_image');
-            $table->string('after_image');
+            // $table->string('before_image');
+            // $table->string('after_image');$
+            $table->string('featured_image')->nullable();
             $table->unsignedInteger('likes_count')->default(0); // optimization
             $table->timestamps();
         });

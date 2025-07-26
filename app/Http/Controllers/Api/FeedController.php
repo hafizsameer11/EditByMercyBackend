@@ -48,27 +48,24 @@ class FeedController extends Controller
 
     public function store(Request $request)
     {
-        if (Auth::user()->role !== 'admin') {
-            abort(403);
-        }
-
+       
         $validated = $request->validate([
             'category_id' => 'nullable|exists:feed_categories,id',
             'caption' => 'nullable|string|max:255',
-            'before_image' => 'required|image',
-            'after_image' => 'required|image',
+            'featured_image' => 'nullable|string',
         ]);
 
         // Save image
-        $beforePath = $request->file('before_image')->store('feeds', 'public');
-        $afterPath = $request->file('after_image')->store('feeds', 'public');
+        $beforePath = $request->file('featured_image')->store('feeds', 'public');
+        // $afterPath = $request->file('after_image')->store('feeds', 'public');
 
         $feed = Feed::create([
             'admin_id' => Auth::id(),
             'category_id' => $validated['category_id'],
             'caption' => $validated['caption'],
-            'before_image' => $beforePath,
-            'after_image' => $afterPath,
+            'featured_image' => $beforePath,
+            // 'before_image' => $beforePath,
+            // 'after_image' => $afterPath,
         ]);
 
         return response()->json(['feed' => $feed], 201);
