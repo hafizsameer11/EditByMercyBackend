@@ -3,6 +3,8 @@
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\FeedController;
+use App\Http\Controllers\Api\QuickReplyController;
 use App\Http\Controllers\QuestionareController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +38,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('questionnaire/assignment/progress/{assignment_id}', [QuestionareController::class, 'getAssignmentProgress']);
     Route::get('/questionnaire/get-assigned-form', [QuestionareController::class, 'getAssignedForm']); //for user to get assigned form
 
+    //quick reply 
+    Route::get('/quick-replies', [QuickReplyController::class, 'index']);
+    Route::post('/quick-replies', [QuickReplyController::class, 'store']);
+    Route::put('/quick-replies/{id}', [QuickReplyController::class, 'update']);
+    Route::delete('/quick-replies/{id}', [QuickReplyController::class, 'destroy']);
+
+    //feed creation
+    Route::get('/feeds', [FeedController::class, 'index']);
+    Route::post('/feeds/{feedId}/toggle-like', [FeedController::class, 'toggleLike']);
+    Route::post('/feeds/store', [FeedController::class, 'store']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [UserController::class, 'createUser']);
