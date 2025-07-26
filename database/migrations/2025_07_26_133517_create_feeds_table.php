@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('feeds', function (Blueprint $table) {
             $table->id();
             $table->foreignId('admin_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('category_id')->constrained('feed_categories')->onDelete('set null')->nullable();
+            // $table->foreignId('category_id')->constrained('feed_categories')->onDelete('set null')->nullable();
+            $table->unsignedBigInteger('category_id')->nullable();
+            $table->foreign('category_id')->references('id')->on('feed_categories')->onDelete('set null')->nullable();
             $table->string('caption')->nullable();
             $table->string('before_image');
             $table->string('after_image');
