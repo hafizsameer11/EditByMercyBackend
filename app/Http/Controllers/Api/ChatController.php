@@ -199,7 +199,7 @@ class ChatController extends Controller
     public function getNonUsers()
     {
         try {
-            $users = User::whereNot('role', 'users')->get();
+            $users = User::whereNot('role', 'user')->get();
             return ResponseHelper::success($users, 'Non-users fetched successfully.');
         } catch (\Exception $e) {
             Log::error('Error fetching non-users: ' . $e->getMessage(), [
