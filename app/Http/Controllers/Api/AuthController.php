@@ -79,8 +79,8 @@ class AuthController extends Controller
      {
           try {
                $dto = $editRequest->validated();
-               $this->userService->editProfile($dto);
-               return ResponseHelper::success(null, 'Profile updated successfully');
+              $user= $this->userService->editProfile($dto);
+               return ResponseHelper::success($user, 'Profile updated successfully');
           } catch (Exception $e) {
                return ResponseHelper::error($e->getMessage());
           }
