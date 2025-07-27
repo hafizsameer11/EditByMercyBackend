@@ -19,7 +19,7 @@ class OrderController extends Controller
     }
     public function orderDetails($id)
     {
-        $order = Order::find($id);
+        $order = Order::with('agent')->find($id);
         if ($order) {
             return ResponseHelper::success($order, "Order details fetched successfully.");
         } else {
