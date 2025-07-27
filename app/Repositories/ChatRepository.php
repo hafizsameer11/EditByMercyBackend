@@ -27,7 +27,7 @@ class ChatRepository
     // public function 
     public function getChatByUserId(int $userId)
     {
-        return Chat::where('user_id', $userId)->with('messages', 'participantA', 'participantB', 'agent')->get();
+        return Chat::where('user_id', $userId)->orWhere('user_2_id', $userId)->with('messages', 'participantA', 'participantB', 'agent')->get();
     }
     public function sendMessage(int $chatId, array $messageData)
     {
