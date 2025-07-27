@@ -48,7 +48,7 @@ Route::prefix('auth')->group(function () {
 });
 Route::middleware(['auth:sanctum'])->group(function () {
 
-    Route::post('edit-profile', [AuthController::class, 'editProfile']);
+    Route::post('edit-profile', [AuthController::class, 'editPorfile']);
 
     Route::post('/send-message', [ChatController::class, 'sendMessage']);
     Route::post('/assign-agent', [ChatController::class, 'assignAgent']);
