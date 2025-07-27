@@ -14,6 +14,7 @@ use App\Http\Requests\Auth\CodeVerificationRequest;
 use App\Http\Requests\Auth\ForgetPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\EditProfileRequest;
 use App\Services\UserService;
 use Exception;
 
@@ -74,7 +75,7 @@ class AuthController extends Controller
           }
      }
 
-     public function editPorfile(RegisterRequest $editRequest)
+     public function editPorfile(EditProfileRequest $editRequest)
      {
           try {
                $dto = $editRequest->validated();
