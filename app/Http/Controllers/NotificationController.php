@@ -23,4 +23,9 @@ class NotificationController extends Controller
         }
         return ResponseHelper::error("Notification not found.", 404);
     }
+    public function count(){
+        $user=Auth::user();
+        $count=Notification::where('user_id', $user->id)->where('is_read', 0)->count();
+        return ResponseHelper::success($count, "Notification count fetched successfully.");
+    }
 }

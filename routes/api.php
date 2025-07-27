@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\QuickReplyController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\QuestionareController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -78,6 +79,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/non-users', [ChatController::class, 'getNonUsers']);
     Route::get('/open-agent-chat/{id}', [ChatController::class, 'getChatWithUserByUserId']);
+
+    //notification routes
+    Route::get('/get-notifications',[NotificationController::class, 'index']);
+    Route::get('/get-notifications-count',[NotificationController::class, 'count']);
+    Route::post('/mark-notification-as-read/{id}',[NotificationController::class, 'markAsRead']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [UserController::class, 'createUser']);
