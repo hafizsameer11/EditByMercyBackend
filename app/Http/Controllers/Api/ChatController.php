@@ -14,6 +14,7 @@ use App\Http\Requests\SendMessageRequest;
 use App\Http\Resources\AssignedAgentViewModel;
 use App\Http\Resources\ChatResource;
 use App\Http\Resources\MessageResource;
+use App\Models\Message;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\ChatService;
@@ -76,6 +77,14 @@ class ChatController extends Controller
             }
             $messages = $chat->messages()->with(['sender', 'receiver', 'originalMessage'])->get();
             $order = Order::where('chat_id', '=', $chatId)->first();
+
+            $userId = Auth::id();
+
+            // ✅ Mark all unread messages for this user in this chat as read
+            Message::where('chat_id', $chatId)
+                ->where('receiver_id', $userId)
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
             return ResponseHelper::success([
                 'order' => $order,
                 'messages' => MessageResource::collection($messages),
@@ -201,8 +210,8 @@ class ChatController extends Controller
         try {
             $userId = Auth::id();
             $users = User::whereNot('role', 'user')
-            ->whereNot('id', $userId)
-            ->get();
+                ->whereNot('id', $userId)
+                ->get();
             return ResponseHelper::success($users, 'Non-users fetched successfully.');
         } catch (\Exception $e) {
             Log::error('Error fetching non-users: ' . $e->getMessage(), [

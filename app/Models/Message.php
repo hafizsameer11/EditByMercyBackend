@@ -17,6 +17,7 @@ class Message extends Model
         'order_id',
         'is_forwarded',
         'original_id',
+        'is_read'
     ];
 
     public function chat()
