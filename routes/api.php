@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\FeedController;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\QuickReplyController;
 use App\Http\Controllers\QuestionareController;
 use Illuminate\Http\Request;
@@ -50,10 +51,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/chat/{id}', [ChatController::class, 'getChatMessages']);
     Route::get('/chats', [ChatController::class, 'getChats']);
     //routes for handling payment with order
-    Route::post('/create-payment',[ChatController::class,'createPayment']);
+    Route::post('/create-payment', [ChatController::class, 'createPayment']);
     // Route::post('/check-current-order')
     //routes for questionare for user and agent
-
     Route::post('questionnaire/assign', [QuestionareController::class, 'assignToUser']);
     Route::post('questionnaire/user/section', [QuestionareController::class, 'submitSection']);
     Route::post('questionnaire/user/answers', [QuestionareController::class, 'getUserAnswers']);
@@ -67,11 +67,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/quick-replies', [QuickReplyController::class, 'store']);
     Route::put('/quick-replies/{id}', [QuickReplyController::class, 'update']);
     Route::delete('/quick-replies/{id}', [QuickReplyController::class, 'destroy']);
-
     //feed creation
     Route::get('/feeds', [FeedController::class, 'index']);
     Route::post('/feeds/{feedId}/toggle-like', [FeedController::class, 'toggleLike']);
     Route::post('/feeds/store', [FeedController::class, 'store']);
+    //order routes for users
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/order/{id}', [OrderController::class, 'orderDetails']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [UserController::class, 'createUser']);
