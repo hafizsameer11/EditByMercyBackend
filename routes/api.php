@@ -47,6 +47,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 });
 Route::middleware(['auth:sanctum'])->group(function () {
+
+    Route::post('edit-profile', [AuthController::class, 'editProfile']);
+
     Route::post('/send-message', [ChatController::class, 'sendMessage']);
     Route::post('/assign-agent', [ChatController::class, 'assignAgent']);
     Route::get('/chat/{id}', [ChatController::class, 'getChatMessages']);
@@ -81,9 +84,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/open-agent-chat/{id}', [ChatController::class, 'getChatWithUserByUserId']);
 
     //notification routes
-    Route::get('/get-notifications',[NotificationController::class, 'index']);
-    Route::get('/get-notifications-count',[NotificationController::class, 'count']);
-    Route::post('/mark-notification-as-read/{id}',[NotificationController::class, 'markAsRead']);
+    Route::get('/get-notifications', [NotificationController::class, 'index']);
+    Route::get('/get-notifications-count', [NotificationController::class, 'count']);
+    Route::post('/mark-notification-as-read/{id}', [NotificationController::class, 'markAsRead']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [UserController::class, 'createUser']);

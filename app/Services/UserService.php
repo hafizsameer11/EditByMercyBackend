@@ -12,6 +12,7 @@ use App\Mail\ForgotPasswordOtpMail;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
@@ -23,7 +24,7 @@ class UserService
     {
         $this->userRepo = $userRepo;
     }
-    public function register(RegisterDTO $registerDTO):User
+    public function register(RegisterDTO $registerDTO): User
     {
         try {
             $user = $this->userRepo->createUser($registerDTO->toArray());
@@ -131,8 +132,19 @@ class UserService
         }
     }
     public function getAllWithNonUserRoles()
-{
-    return User::where('role', '!=', 'user')->get();
-}
+    {
+        return User::where('role', '!=', 'user')->get();
+    }
 
+    public function editProfile($data)
+    {
+        try {
+            $userId = Auth::id();
+            $user = User::find($userId);
+            $user->update($data);
+            return $user;
+        } catch (Exception $e) {
+            return $e;
+        }
+    }
 }

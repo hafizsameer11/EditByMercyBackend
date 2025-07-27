@@ -73,4 +73,15 @@ class AuthController extends Controller
                return ResponseHelper::error($e->getMessage());
           }
      }
+
+     public function editPorfile(RegisterRequest $editRequest)
+     {
+          try {
+               $dto = $editRequest->validated();
+               $this->userService->editProfile($dto);
+               return ResponseHelper::success(null, 'Profile updated successfully');
+          } catch (Exception $e) {
+               return ResponseHelper::error($e->getMessage());
+          }
+     }
 }
