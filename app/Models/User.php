@@ -59,6 +59,6 @@ class User extends Authenticatable
             return null; // or return default image url
         }
 
-        return asset($value);
+        return asset('storage/'.$value);
     }
 }
