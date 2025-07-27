@@ -77,7 +77,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //aggent to agent chat
 
     Route::get('/non-users', [ChatController::class, 'getNonUsers']);
-    Route::get('/open-agent-chat', [ChatController::class, 'getChatWithUserByUserId']);
+    Route::get('/open-agent-chat/{id}', [ChatController::class, 'getChatWithUserByUserId']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [UserController::class, 'createUser']);
