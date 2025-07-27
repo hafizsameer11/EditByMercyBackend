@@ -6,6 +6,7 @@ use App\Helpers\ResponseHelper;
 use App\Http\Requests\StoreOrUpdateQuestionnaireRequest;
 use App\Models\Form;
 use App\Models\Message;
+use App\Models\Order;
 use App\Models\QuestionnaireAssignment;
 use App\Models\QuestionResponse;
 use App\Models\Section;
@@ -131,6 +132,9 @@ class QuestionareController extends Controller
                 'type' => 'form',
                 'message' => 'Please fill out the following form to submit your query.',
             ]);
+            $order=Order::where('chat_id', $validated['chat_id'])->first();
+            $order->is_form_assigned=true;
+            $order->save();
             return ResponseHelper::success($assignment, "Questionnaire assigned successfully.", 200);
         } catch (\Exception $e) {
             return ResponseHelper::error($e->getMessage(), 500);

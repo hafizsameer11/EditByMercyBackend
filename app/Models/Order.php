@@ -17,7 +17,8 @@ class Order extends Model
         'service_type',
         'payment_status',
         'txn',
-        'chat_id'
+        'chat_id',
+        'is_form_assigned'
     ];
     public function user()
     {
