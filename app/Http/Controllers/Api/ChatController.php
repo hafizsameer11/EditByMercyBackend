@@ -75,9 +75,9 @@ class ChatController extends Controller
                 return ResponseHelper::error('Chat not found.', 404);
             }
             $messages = $chat->messages()->with(['sender', 'receiver', 'originalMessage'])->get();
-            $order=Order::where('chat_id','=',$chatId)->first();
+            $order = Order::where('chat_id', '=', $chatId)->first();
             return ResponseHelper::success([
-                'order'=>$order,
+                'order' => $order,
                 'messages' => MessageResource::collection($messages),
             ], 'Chat messages fetched successfully.');
         } catch (\Exception $e) {
@@ -164,7 +164,8 @@ class ChatController extends Controller
             return ResponseHelper::error('An error occurred while assigning the agent.', 500);
         }
     }
-    public function getChats(){
+    public function getChats()
+    {
         try {
             $userId = Auth::id();
             $chats = $this->chatService->getChatByUserId($userId);
@@ -176,10 +177,11 @@ class ChatController extends Controller
             return ResponseHelper::error('An error occurred while fetching chats.', 500);
         }
     }
-    public function createPayment(CreatePaymentRequest $request){
+    public function createPayment(CreatePaymentRequest $request)
+    {
         try {
             // $dto = CreatePaymentDTO::fromRequest($request);
-            $data=$request->validated();
+            $data = $request->validated();
             $payment = $this->orderService->createPayment($data);
             // $payment = $this->paymentService->createPayment($dto);
             return ResponseHelper::success($payment, 'Payment created successfully.', 201);
@@ -189,6 +191,34 @@ class ChatController extends Controller
                 'request_data' => $request->all(),
             ]);
             return ResponseHelper::error('An error occurred while creating the payment.', 500);
+        }
+    }
+
+
+    //for agents to get other agents
+    public function getNonUsers()
+    {
+        try {
+            $users = User::where('role', '!=', 'users')->get();
+            return ResponseHelper::success($users, 'Non-users fetched successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error fetching non-users: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+            ]);
+            return ResponseHelper::error('An error occurred while fetching non-users.', 500);
+        }
+    }
+    public function getChatWithUserByUserId($userId)
+    {
+        try {
+
+            $chats = $this->chatService->getChatByUserId($userId);
+            return ResponseHelper::success(ChatResource::collection($chats), 'Chats fetched successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error fetching chats: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+            ]);
+            return ResponseHelper::error('An error occurred while fetching chats.', 500);
         }
     }
 }

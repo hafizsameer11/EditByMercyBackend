@@ -74,6 +74,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //order routes for users
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/order/{id}', [OrderController::class, 'orderDetails']);
+    //aggent to agent chat
+
+    Route::get('/non-users', [ChatController::class, 'getNonUsers']);
+    Route::get('/open-agent-chat', [ChatController::class, 'getChatWithUserByUserId']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [UserController::class, 'createUser']);
