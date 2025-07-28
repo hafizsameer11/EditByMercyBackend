@@ -192,6 +192,13 @@ class ChatController extends Controller
             // $dto = CreatePaymentDTO::fromRequest($request);
             $data = $request->validated();
             $payment = $this->orderService->createPayment($data);
+            $message=Message::create([
+                'sender_id' => Auth::id(),
+                'chat_id' => $data['chat_id'],
+                'message' => "Please Check this Order and make payment",
+                "type"=>"payment"
+
+            ]);
             // $payment = $this->paymentService->createPayment($dto);
             return ResponseHelper::success($payment, 'Payment created successfully.', 201);
         } catch (\Exception $e) {
