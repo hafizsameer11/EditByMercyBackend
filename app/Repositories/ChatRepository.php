@@ -29,6 +29,10 @@ class ChatRepository
     {
         return Chat::where('user_id', $userId)->orWhere('user_2_id', $userId)->with('messages', 'participantA', 'participantB', 'agent')->orderBy('created_at', 'desc')->get();
     }
+    public function getChatByUserIdSIngle(int $userId)
+    {
+        return Chat::where('user_id', $userId)->orWhere('user_2_id', $userId)->with('messages', 'participantA', 'participantB', 'agent')->orderBy('created_at', 'desc')->first();
+    }
     public function sendMessage(int $chatId, array $messageData)
     {
         $chat = $this->getChatById($chatId);

@@ -65,6 +65,14 @@ class ChatService
             throw $e;
         }
     }
+    public function getChatByUserIdSIngle(int $userId)
+    {
+        try {
+            return $this->chatRepository->getChatByUserIdSIngle($userId);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
 
     public function createChatIfNotExists($user, $otherUser)
     {
