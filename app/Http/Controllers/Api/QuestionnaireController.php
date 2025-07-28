@@ -28,29 +28,31 @@ class QuestionnaireController extends Controller
         ]);
     }
 
-    public function getProgress($chat_id)
-    {
-        $record = ChatQuestionnaireAnswer::where('chat_id', $chat_id)->first();
+  public function getProgress($chat_id)
+{
+    $record = ChatQuestionnaireAnswer::where('chat_id', $chat_id)->first();
 
-        if (!$record) {
-            return response()->json(['status' => 'success', 'progress' => 0, 'completed_sections' => 0]);
-        }
-
-        $answers = $record->answers;
-        $sectionKeys = [
-            'selectedFace', // Category 1
-            'maintainSkinTone', 'selectedLighter', 'selectedDarker', // Category 2
-            'eyes', 'lips', 'selectedHips', 'selectedButt', 'height', 'nose', 'selectedTummy', 'chin', 'arm', 'other' // Category 3
-        ];
-
-        $filled = array_filter($sectionKeys, fn($key) => !empty($answers[$key] ?? null));
-
-        return response()->json([
-            'status' => 'success',
-            'progress' => round(count($filled) / count($sectionKeys) * 100),
-            'completed_sections' => count($filled)
-        ]);
+    if (!$record) {
+        return response()->json(['status' => 'success', 'progress' => 0, 'completed_sections' => 0]);
     }
+
+    $answers = is_array($record->answers) ? $record->answers : json_decode($record->answers, true);
+
+    $sectionKeys = [
+        'selectedFace', // Category 1
+        'maintainSkinTone', 'selectedLighter', 'selectedDarker', // Category 2
+        'eyes', 'lips', 'selectedHips', 'selectedButt', 'height', 'nose', 'selectedTummy', 'chin', 'arm', 'other' // Category 3
+    ];
+
+    $filled = array_filter($sectionKeys, fn($key) => !empty($answers[$key] ?? null));
+
+    return response()->json([
+        'status' => 'success',
+        'progress' => round(count($filled) / count($sectionKeys) * 100),
+        'completed_sections' => count($filled)
+    ]);
+}
+
 
     public function getAnswers($chat_id)
     {
