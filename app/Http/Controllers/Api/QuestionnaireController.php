@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ChatQuestionnaireAnswer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class QuestionnaireController extends Controller
 {
@@ -28,7 +29,7 @@ class QuestionnaireController extends Controller
         ]);
     }
 
-  public function getProgress($chat_id)
+public function getProgress($chat_id)
 {
     $record = ChatQuestionnaireAnswer::where('chat_id', $chat_id)->first();
 
@@ -36,7 +37,11 @@ class QuestionnaireController extends Controller
         return response()->json(['status' => 'success', 'progress' => 0, 'completed_sections' => 0]);
     }
 
+    Log::info('Raw answers value: ' . $record->answers);
+
     $answers = is_array($record->answers) ? $record->answers : json_decode($record->answers, true);
+
+    Log::info('Decoded answers array: ', $answers);
 
     $sectionKeys = [
         'selectedFace', // Category 1
@@ -49,9 +54,12 @@ class QuestionnaireController extends Controller
     return response()->json([
         'status' => 'success',
         'progress' => round(count($filled) / count($sectionKeys) * 100),
-        'completed_sections' => count($filled)
+        'completed_sections' => count($filled),
+        'debug_answers' => $answers, // <-- Optional debug help
+        'raw' => $record->answers     // <-- Optional raw value
     ]);
 }
+
 
 
     public function getAnswers($chat_id)
