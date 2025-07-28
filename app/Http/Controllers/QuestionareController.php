@@ -129,7 +129,8 @@ class QuestionareController extends Controller
                 'chat_id' => $validated['chat_id'],
                 'form_id' => $assignment->id,
                 'sender_id' => Auth::id(),
-                'type' => 'form',
+                'receiver_id' => $validated['user_id'],
+                'type' => 'questionnaire',
                 'message' => 'Please fill out the following form to submit your query.',
             ]);
             $order=Order::where('chat_id', $validated['chat_id'])->first();
