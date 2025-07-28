@@ -32,7 +32,7 @@ class QuestionnaireController extends Controller
 public function getProgress($chat_id)
 {
     $record = ChatQuestionnaireAnswer::where('chat_id', $chat_id)->first();
-
+    Log::info('Chat ID: ' . $chat_id);
     if (!$record) {
         return response()->json(['status' => 'success', 'progress' => 0, 'completed_sections' => 0]);
     }
