@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class QuestionnaireController extends Controller
 {
-     public function saveAnswer(Request $request)
+    public function saveAnswer(Request $request)
     {
         $request->validate([
             'chat_id' => 'required|integer',
@@ -29,36 +29,47 @@ class QuestionnaireController extends Controller
         ]);
     }
 
-public function getProgress($chat_id)
-{
-    $record = ChatQuestionnaireAnswer::where('chat_id', $chat_id)->first();
-    Log::info('Chat ID: ' . $chat_id);
-    if (!$record) {
-        return response()->json(['status' => 'success', 'progress' => 0, 'completed_sections' => 0]);
+    public function getProgress($chat_id)
+    {
+        $record = ChatQuestionnaireAnswer::where('chat_id', $chat_id)->first();
+        Log::info('Chat ID: ' . $chat_id);
+        if (!$record) {
+            return response()->json(['status' => 'success', 'progress' => 0, 'completed_sections' => 0]);
+        }
+
+        Log::info('Raw answers value: ', [$record->answers]);
+
+        $answers = is_array($record->answers) ? $record->answers : json_decode($record->answers, true);
+
+        Log::info('Decoded answers array: ', $answers);
+
+        $sectionKeys = [
+            'selectedFace', // Category 1
+            'maintainSkinTone',
+            'selectedLighter',
+            'selectedDarker', // Category 2
+            'eyes',
+            'lips',
+            'selectedHips',
+            'selectedButt',
+            'height',
+            'nose',
+            'selectedTummy',
+            'chin',
+            'arm',
+            'other' // Category 3
+        ];
+
+        $filled = array_filter($sectionKeys, fn($key) => !empty($answers[$key] ?? null));
+
+        return response()->json([
+            'status' => 'success',
+            'progress' => round(count($filled) / count($sectionKeys) * 100),
+            'completed_sections' => count($filled),
+            'debug_answers' => $answers, // <-- Optional debug help
+            'raw' => $record->answers     // <-- Optional raw value
+        ]);
     }
-
-    Log::info('Raw answers value: ' , [$record->answers]);
-
-    $answers = is_array($record->answers) ? $record->answers : json_decode($record->answers, true);
-
-    Log::info('Decoded answers array: ', $answers);
-
-    $sectionKeys = [
-        'selectedFace', // Category 1
-        'maintainSkinTone', 'selectedLighter', 'selectedDarker', // Category 2
-        'eyes', 'lips', 'selectedHips', 'selectedButt', 'height', 'nose', 'selectedTummy', 'chin', 'arm', 'other' // Category 3
-    ];
-
-    $filled = array_filter($sectionKeys, fn($key) => !empty($answers[$key] ?? null));
-
-    return response()->json([
-        'status' => 'success',
-        'progress' => round(count($filled) / count($sectionKeys) * 100),
-        'completed_sections' => count($filled),
-        'debug_answers' => $answers, // <-- Optional debug help
-        'raw' => $record->answers     // <-- Optional raw value
-    ]);
-}
 
 
 
