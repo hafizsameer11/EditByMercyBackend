@@ -274,6 +274,7 @@ class ChatController extends Controller
                 'receiver_id' => $receiverId,
                 'message' => $originalMessage->message,
                 'type' => $originalMessage->type,
+                'file' => $originalMessage->file,
                 'is_forwarded' => 1,
                 'original_id' => $forwardMessageId
 
