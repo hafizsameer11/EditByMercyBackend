@@ -285,7 +285,7 @@ class ChatController extends Controller
                 'user_id' => Auth::id(),
                 'request_data' => $request->all(),
             ]);
-            return ResponseHelper::error('An error occurred while forwarding the message.', 500);
+            return ResponseHelper::error('An error occurred while forwarding the message.'.$e->getMessage(), 500);
         }
     }
 }
