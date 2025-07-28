@@ -37,7 +37,7 @@ public function getProgress($chat_id)
         return response()->json(['status' => 'success', 'progress' => 0, 'completed_sections' => 0]);
     }
 
-    Log::info('Raw answers value: ' . $record->answers);
+    Log::info('Raw answers value: ' , [$record->answers]);
 
     $answers = is_array($record->answers) ? $record->answers : json_decode($record->answers, true);
 
