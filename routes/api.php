@@ -52,6 +52,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('edit-profile', [AuthController::class, 'editPorfile']);
 
     Route::post('/send-message', [ChatController::class, 'sendMessage']);
+    Route::post('/forward-message', [ChatController::class, 'forwardMessage']);
     Route::post('/assign-agent', [ChatController::class, 'assignAgent']);
     Route::get('/chat/{id}', [ChatController::class, 'getChatMessages']);
     Route::get('/chats', [ChatController::class, 'getChats']);

@@ -192,11 +192,11 @@ class ChatController extends Controller
             // $dto = CreatePaymentDTO::fromRequest($request);
             $data = $request->validated();
             $payment = $this->orderService->createPayment($data);
-            $message=Message::create([
+            $message = Message::create([
                 'sender_id' => Auth::id(),
                 'chat_id' => $data['chat_id'],
                 'message' => "Please Check this Order and make payment",
-                "type"=>"payment"
+                "type" => "payment"
 
             ]);
             // $payment = $this->paymentService->createPayment($dto);
@@ -209,20 +209,22 @@ class ChatController extends Controller
             return ResponseHelper::error('An error occurred while creating the payment.', 500);
         }
     }
-public function updatePayment(Request $request){
-    $chatId=$request->chat_id;
-    $order=Order::where('chat_id',$chatId)->orderBy('created_at','desc')->first();
-    $order->payment_status='success';
-    $order->save();
-    return ResponseHelper::success($order, 'Order updated successfully.');
-}
-public function updateOrderStatus(Request $request){
-    $chatId=$request->chat_id;
-    $order=Order::where('chat_id',$chatId)->orderBy('created_at','desc')->first();
-    $order->status=$request->status;
-    $order->save();
-    return ResponseHelper::success($order, 'Order updated successfully.');
-}
+    public function updatePayment(Request $request)
+    {
+        $chatId = $request->chat_id;
+        $order = Order::where('chat_id', $chatId)->orderBy('created_at', 'desc')->first();
+        $order->payment_status = 'success';
+        $order->save();
+        return ResponseHelper::success($order, 'Order updated successfully.');
+    }
+    public function updateOrderStatus(Request $request)
+    {
+        $chatId = $request->chat_id;
+        $order = Order::where('chat_id', $chatId)->orderBy('created_at', 'desc')->first();
+        $order->status = $request->status;
+        $order->save();
+        return ResponseHelper::success($order, 'Order updated successfully.');
+    }
 
     //for agents to get other agents
     public function getNonUsers()
@@ -251,6 +253,39 @@ public function updateOrderStatus(Request $request){
                 'user_id' => Auth::id(),
             ]);
             return ResponseHelper::error('An error occurred while fetching chats.', 500);
+        }
+    }
+    public function forwardMessage(Request $request)
+    {
+        try {
+            $forwardMessageId = $request->original_message_id;
+            $receiverId = $request->receiver_id;
+            $data = [
+                'original_message_id' => $forwardMessageId,
+                'receiver_id' => $receiverId
+            ];
+
+            $chatById = $this->chatService->getChatByUserId($request->receiver_id);
+            $originalMessage = Message::find($forwardMessageId);
+            //
+            $newMessage = Message::create([
+                'chat_id' => $chatById->id,
+                'sender_id' => Auth::id(),
+                'receiver_id' => $receiverId,
+                'message' => $originalMessage->message,
+                'type' => $originalMessage->type,
+                'is_forwarded' => 1,
+                'original_id' => $forwardMessageId
+
+            ]);
+            // $message = $this->chatService->forwardMessage($request->all());
+            return ResponseHelper::success($data, 'Message forwarded successfully.', 201);
+        } catch (\Exception $e) {
+            Log::error('Error forwarding message: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+            ]);
+            return ResponseHelper::error('An error occurred while forwarding the message.', 500);
         }
     }
 }
