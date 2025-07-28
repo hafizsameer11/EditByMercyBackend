@@ -86,6 +86,7 @@ class ChatController extends Controller
                 ->where('is_read', false)
                 ->update(['is_read' => true]);
             return ResponseHelper::success([
+                'chat'=>$chat,
                 'order' => $order,
                 'messages' => MessageResource::collection($messages),
             ], 'Chat messages fetched successfully.');
