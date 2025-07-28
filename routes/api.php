@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\QuestionnaireController;
 use App\Http\Controllers\Api\QuickReplyController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\QuestionareController;
@@ -59,13 +60,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Route::post('/check-current-order')
     //routes for questionare for user and agent
     Route::post('questionnaire/assign', [QuestionareController::class, 'assignToUser']);
-    Route::post('questionnaire/user/section', [QuestionareController::class, 'submitSection']);
-    Route::post('questionnaire/user/answers', [QuestionareController::class, 'getUserAnswers']);
-    Route::post('questionnaire/assignment/close', [QuestionareController::class, 'closeAssignment']);
-    Route::post('questionnaire/assignment/reopen', [QuestionareController::class, 'reopenAssignment']);
-    Route::get('questionnaire/assignment/answers/{user_id}', [QuestionareController::class, 'getAnswersByUser']);
-    Route::get('questionnaire/assignment/progress/{assignment_id}', [QuestionareController::class, 'getAssignmentProgress']);
-    Route::get('questionnaire/get-assigned-form', [QuestionareController::class, 'getAssignedForm']);
+      Route::post('/questionnaire/save-answer', [QuestionnaireController::class, 'saveAnswer']);
+    Route::get('/questionnaire/progress/{chat_id}', [QuestionnaireController::class, 'getProgress']);
+    Route::get('/questionnaire/answers/{chat_id}', [QuestionnaireController::class, 'getAnswers']);
+    // Route::post('questionnaire/user/section', [QuestionareController::class, 'submitSection']);
+    // Route::post('questionnaire/user/answers', [QuestionareController::class, 'getUserAnswers']);
+    // Route::post('questionnaire/assignment/close', [QuestionareController::class, 'closeAssignment']);
+    // Route::post('questionnaire/assignment/reopen', [QuestionareController::class, 'reopenAssignment']);
+    // Route::get('questionnaire/assignment/answers/{user_id}', [QuestionareController::class, 'getAnswersByUser']);
+    // Route::get('questionnaire/assignment/progress/{assignment_id}', [QuestionareController::class, 'getAssignmentProgress']);
+    // Route::get('questionnaire/get-assigned-form', [QuestionareController::class, 'getAssignedForm']);
     //quick reply 
     Route::get('/quick-replies', [QuickReplyController::class, 'index']);
     Route::post('/quick-replies', [QuickReplyController::class, 'store']);
