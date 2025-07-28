@@ -58,6 +58,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //routes for handling payment with order
     Route::post('/create-payment', [ChatController::class, 'createPayment']);
     Route::post('/update-payment', [ChatController::class, 'updatePayment']);
+    Route::post('/update-order-status', [ChatController::class, 'updateOrderStatus']);
     // Route::post('/check-current-order')
     //routes for questionare for user and agent
     Route::post('questionnaire/assign', [QuestionareController::class, 'assignToUser']);

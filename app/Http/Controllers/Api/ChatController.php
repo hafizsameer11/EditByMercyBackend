@@ -216,6 +216,13 @@ public function updatePayment(Request $request){
     $order->save();
     return ResponseHelper::success($order, 'Order updated successfully.');
 }
+public function updateOrderStatus(Request $request){
+    $chatId=$request->chat_id;
+    $order=Order::where('chat_id',$chatId)->orderBy('created_at','desc')->first();
+    $order->status=$request->status;
+    $order->save();
+    return ResponseHelper::success($order, 'Order updated successfully.');
+}
 
     //for agents to get other agents
     public function getNonUsers()

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger('agent_id')->nullable();
-            $table->string('status')->default('pending'); // Example status field
+            $table->string('status')->default('pending');
             $table->decimal('total_amount', 10, 2)->default(0.00); // Example total amount field
             $table->string('payment_method')->nullable(); //
             $table->string('no_of_photos')->nullable(); // Example number of photos field
