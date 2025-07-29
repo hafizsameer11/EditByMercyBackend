@@ -57,6 +57,7 @@ class UserService
         return [
             'user' => $user,
             'token' => $token,
+            'id' => $user->id
         ];
     }
     public function forgetPassword(ForgetPasswordDTO $forgetPasswordDTO)
@@ -83,7 +84,7 @@ class UserService
             // return ResponseHelper::error($e->getMessage());
         }
     }
-    public function verifyCode(VerifyCodeDTO $verifyCodeDTO)
+    public function verifyCode(VerifyCodeDTO $verifyCodeDTO): Exception|User
     {
         try {
             $user = $this->userRepo->findByEmail($verifyCodeDTO->getEmail());

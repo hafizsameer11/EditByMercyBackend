@@ -16,6 +16,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\EditProfileRequest;
 use App\Models\User;
+use App\Services\NotificationService;
 use App\Services\UserService;
 use Exception;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ class AuthController extends Controller
           try {
                $dto = LoginDTO::fromRequest($request);
                $user = $this->userService->login($dto);
-
+               NotificationService::sendToUserById($user['id'], 'Login Notification', 'You logged in successfully');
                return ResponseHelper::success($user);
           } catch (Exception $e) {
                return ResponseHelper::error($e->getMessage());

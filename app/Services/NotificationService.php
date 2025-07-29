@@ -22,8 +22,9 @@ class NotificationService
      * @param string $body
      * @return array
      */
-    public static function  sendToUserById(int $userId, string $title, string $body,FirebaseNotificationService $firebaseNotificationService): array
+    public static function  sendToUserById(int $userId, string $title, string $body): array
     {
+        $firebaseNotificationService= new FirebaseNotificationService();
         $user = User::find($userId);
         Log::info("data received",[$userId,$title,$body]);  
         if (!$user || !$user->fcmToken) {
