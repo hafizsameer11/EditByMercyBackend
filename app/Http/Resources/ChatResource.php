@@ -27,6 +27,7 @@ class ChatResource extends JsonResource
             'agent_id'     => $this->agent_id ?? null,
             'created_at'   => $this->created_at ?? null,
             'updated_at'   => $this->updated_at ?? null,
+            'category'=>$this->order->service_type,
 
             'messages'     => MessageResource::collection($this->whenLoaded('messages')),
 
