@@ -184,7 +184,7 @@ class ChatController extends Controller
             Log::error('Error fetching chats: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
             ]);
-            return ResponseHelper::error('An error occurred while fetching chats.', 500);
+            return ResponseHelper::error('An error occurred while fetching chats.'.$e->getMessage(), 500);
         }
     }
     public function createPayment(CreatePaymentRequest $request)
