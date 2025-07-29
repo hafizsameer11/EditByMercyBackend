@@ -15,8 +15,12 @@ use App\Http\Requests\Auth\ForgetPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\EditProfileRequest;
+use App\Models\User;
 use App\Services\UserService;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -85,4 +89,15 @@ class AuthController extends Controller
                return ResponseHelper::error($e->getMessage());
           }
      }
+      public function setFcmToken(Request $request)
+    {
+        $userId = Auth::user()->id;
+        Log::info("FC token set: " . $request->fcmToken);
+        $fcmToken = $request->fcmToken;
+
+        $user = User::where('id', $userId)->first();
+        $user->fcmToken = $fcmToken;
+        $user->save();
+        return response()->json(['status' => 'success', 'message' => 'FCM token set successfully'], 200);
+    }
 }
