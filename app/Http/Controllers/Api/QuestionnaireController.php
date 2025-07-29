@@ -9,25 +9,67 @@ use Illuminate\Support\Facades\Log;
 
 class QuestionnaireController extends Controller
 {
+    // public function saveAnswer(Request $request)
+    // {
+    //     $request->validate([
+    //         'chat_id' => 'required|integer',
+    //         'user_id' => 'required|integer',
+    //         'answers' => 'required|array',
+    //     ]);
+
+    //     $record = ChatQuestionnaireAnswer::updateOrCreate(
+    //         ['chat_id' => $request->chat_id, 'user_id' => $request->user_id],
+    //         ['answers' => $request->answers]
+    //     );
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Answers saved successfully.',
+    //         'data' => $record
+    //     ]);
+    // }
+
     public function saveAnswer(Request $request)
-    {
-        $request->validate([
-            'chat_id' => 'required|integer',
-            'user_id' => 'required|integer',
-            'answers' => 'required|array',
-        ]);
+{
+    $request->validate([
+        'chat_id' => 'required|integer',
+        'user_id' => 'required|integer',
+        'answers' => 'required|array',
+    ]);
 
-        $record = ChatQuestionnaireAnswer::updateOrCreate(
-            ['chat_id' => $request->chat_id, 'user_id' => $request->user_id],
-            ['answers' => $request->answers]
-        );
+    $existing = ChatQuestionnaireAnswer::where('chat_id', $request->chat_id)
+        ->where('user_id', $request->user_id)
+        ->first();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Answers saved successfully.',
-            'data' => $record
+    if ($existing) {
+        $currentAnswers = $existing->answers ?? [];
+
+        // Ensure it's an array of submissions
+        if (!is_array($currentAnswers) || !isset($currentAnswers[0])) {
+            $currentAnswers = [$currentAnswers];
+        }
+
+        // Append the new submission
+        $currentAnswers[] = $request->answers;
+
+        $existing->answers = $currentAnswers;
+        $existing->save();
+
+        $record = $existing;
+    } else {
+        $record = ChatQuestionnaireAnswer::create([
+            'chat_id' => $request->chat_id,
+            'user_id' => $request->user_id,
+            'answers' => [$request->answers], // save as array of submissions
         ]);
     }
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Answers saved successfully.',
+        'data' => $record
+    ]);
+}
 
     public function getProgress($chat_id)
     {
