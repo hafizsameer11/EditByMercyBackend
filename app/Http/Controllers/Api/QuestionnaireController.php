@@ -30,46 +30,46 @@ class QuestionnaireController extends Controller
     // }
 
     public function saveAnswer(Request $request)
-{
-    $request->validate([
-        'chat_id' => 'required|integer',
-        'user_id' => 'required|integer',
-        'answers' => 'required|array',
-    ]);
+    {
+        $request->validate([
+            'chat_id' => 'required|integer',
+            'user_id' => 'required|integer',
+            'answers' => 'required|array',
+        ]);
 
-    $existing = ChatQuestionnaireAnswer::where('chat_id', $request->chat_id)
-        ->where('user_id', $request->user_id)
-        ->first();
+        $existing = ChatQuestionnaireAnswer::where('chat_id', $request->chat_id)
+            ->where('user_id', $request->user_id)
+            ->first();
 
-    if ($existing) {
-        $currentAnswers = $existing->answers ?? [];
+        if ($existing) {
+            $currentAnswers = $existing->answers ?? [];
 
-        // Ensure it's an array of submissions
-        if (!is_array($currentAnswers) || !isset($currentAnswers[0])) {
-            $currentAnswers = [$currentAnswers];
+            if (!is_array($currentAnswers)) {
+                $currentAnswers = json_decode($currentAnswers, true) ?? [];
+            }
+
+            // 🧠 Merge the new answers into the existing object
+            $mergedAnswers = array_merge($currentAnswers, $request->answers);
+
+            $existing->answers = $mergedAnswers;
+            $existing->save();
+
+            $record = $existing;
+        } else {
+            $record = ChatQuestionnaireAnswer::create([
+                'chat_id' => $request->chat_id,
+                'user_id' => $request->user_id,
+                'answers' => $request->answers,
+            ]);
         }
 
-        // Append the new submission
-        $currentAnswers[] = $request->answers;
-
-        $existing->answers = $currentAnswers;
-        $existing->save();
-
-        $record = $existing;
-    } else {
-        $record = ChatQuestionnaireAnswer::create([
-            'chat_id' => $request->chat_id,
-            'user_id' => $request->user_id,
-            'answers' => [$request->answers], // save as array of submissions
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Answers saved successfully.',
+            'data' => $record
         ]);
     }
 
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Answers saved successfully.',
-        'data' => $record
-    ]);
-}
 
     public function getProgress($chat_id)
     {
