@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -43,7 +44,11 @@ class NotificationService
             );
 
             Log::info("Notification sent to userId: $userId", $response);
-
+            $notification=Notification::create([
+                'user_id' => $userId,
+                'title' => $title,
+                'content' => $body
+            ]);
             return ['status' => 'success', 'message' => 'Notification sent successfully', 'response' => $response];
         } catch (\Exception $e) {
             Log::error("Error sending notification to userId: $userId - " . $e->getMessage());
