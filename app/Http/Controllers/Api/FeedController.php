@@ -36,7 +36,7 @@ class FeedController extends Controller
             return [
                 'id' => $feed->id,
                 'caption' => $feed->caption,
-                'featured_image' => asset($feed->featured_image),
+                'featured_image' => asset('storage/'.$feed->featured_image),
                 'likes_count' => $feed->likes_count,
                 'category' => $feed->category->name ?? null,
                 'is_liked' => $feed->isLikedBy($request->user()->id),
