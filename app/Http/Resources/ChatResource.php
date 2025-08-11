@@ -13,7 +13,7 @@ class ChatResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-  public function toArray($request)
+    public function toArray($request)
     {
         $currentUserId = Auth::id();
 
@@ -27,18 +27,18 @@ class ChatResource extends JsonResource
             'agent_id'     => $this->agent_id ?? null,
             'created_at'   => $this->created_at ?? null,
             'updated_at'   => $this->updated_at ?? null,
-'category' => $this->order->service_type ?? null,
-'status' => $this->order->status ?? null,
+            'category' => $this->order->service_type ?? null,
+            'status' => $this->order->status ?? null,
 
             'messages'     => MessageResource::collection($this->whenLoaded('messages')),
 
-            'participant_a'=> $isUserA 
-                                ? new UserMiniResource($this->whenLoaded('participantA'))
-                                : new UserMiniResource($this->whenLoaded('participantB')),
+            'participant_a' => $isUserA
+                ? new UserMiniResource($this->whenLoaded('participantA'))
+                : new UserMiniResource($this->whenLoaded('participantB')),
 
-            'participant_b'=> $isUserA 
-                                ? new UserMiniResource($this->whenLoaded('participantB'))
-                                : new UserMiniResource($this->whenLoaded('participantA')),
+            'participant_b' => $isUserA
+                ? new UserMiniResource($this->whenLoaded('participantB'))
+                : new UserMiniResource($this->whenLoaded('participantA')),
 
             'agent'        => new UserMiniResource($this->whenLoaded('agent')),
         ];
