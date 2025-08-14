@@ -15,6 +15,7 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class UserService
@@ -137,15 +138,31 @@ class UserService
         return User::where('role', '!=', 'user')->get();
     }
 
-    public function editProfile($data)
-    {
-        try {
-            $userId = Auth::id();
-            $user = User::find($userId);
-            $user->update($data);
-            return $user;
-        } catch (Exception $e) {
-            return $e;
+   public function editProfile($data)
+{
+    try {
+        $userId = Auth::id();
+        $user = User::findOrFail($userId);
+
+        // If profile_picture is uploaded
+        if (isset($data['profile_picture']) && $data['profile_picture'] instanceof \Illuminate\Http\UploadedFile) {
+            // Store in storage/app/public/profile_picture
+            $path = $data['profile_picture']->store('profile_picture', 'public');
+
+            // Replace old picture if exists
+            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
+            // Save new path
+            $data['profile_picture'] = $path;
         }
+
+        $user->update($data);
+
+        return $user;
+    } catch (Exception $e) {
+        return $e->getMessage();
     }
+}
 }
