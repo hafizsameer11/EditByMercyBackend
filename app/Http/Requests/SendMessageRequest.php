@@ -25,9 +25,9 @@ class SendMessageRequest extends FormRequest
     {
         return [
             'chat_id' => 'required|exists:chats,id',
-            'type' => 'required|in:text,image,file,voice,order',
+            'type' => 'required|in:text,image,file,voice,order,video',
             'message' => 'nullable|string',
-            'file' => 'nullable|file|max:10240', // Max 10MB
+            'file' => 'nullable|file', // Max 10MB
             'duration' => 'nullable|integer',
             'order_id' => 'nullable|exists:orders,id',
             'is_forwarded' => 'nullable|boolean',
