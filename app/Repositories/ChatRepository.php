@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Chat;
+use Illuminate\Support\Facades\Log;
 
 class ChatRepository
 {
@@ -27,7 +28,7 @@ class ChatRepository
     // public function 
   public function getChatByUserId(int $userId)
 {
-    return Chat::where('user_id', $userId)
+    $chats= Chat::where('user_id', $userId)
         ->orWhere('user_2_id', $userId)
         ->with(['messages', 'participantA', 'participantB', 'agent', 'order'])
         ->withCount([
@@ -38,6 +39,8 @@ class ChatRepository
         ])
         ->orderBy('created_at', 'desc')
         ->get();
+        Log::info("chats are",[$chats]);
+        return $chats;
 }
 
     public function getChatByUserIdSIngle(int $userId)
