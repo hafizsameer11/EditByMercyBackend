@@ -33,13 +33,13 @@ class ChatRepository
         ->with(['messages', 'participantA', 'participantB', 'agent', 'order'])
         ->withCount([
             'messages as unread_count' => function ($query) use ($userId) {
-                $query->where('is_read', false)
+                $query->where('is_read', 0)
                       ->where('sender_id', '!=', $userId); // exclude user's own messages
             }
         ])
         ->orderBy('created_at', 'desc')
         ->get();
-        Log::info("chats are",[$chats]);
+        Log::info("chats are",[$chats->toArray()]);
         return $chats;
 }
 
