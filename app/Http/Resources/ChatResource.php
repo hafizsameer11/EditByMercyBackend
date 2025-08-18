@@ -6,6 +6,7 @@ use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ChatResource extends JsonResource
 {
@@ -19,6 +20,7 @@ class ChatResource extends JsonResource
       public function toArray($request)
     {
         $currentUserId = Auth::id();
+        Log::info("current user id",[$currentUserId]);
         $isUserA = $this->user_id === $currentUserId;
 
         // Resolve unread_count with best available source.

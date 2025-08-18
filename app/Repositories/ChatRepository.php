@@ -39,7 +39,7 @@ class ChatRepository
         ])
         ->orderBy('created_at', 'desc')
         ->get();
-        Log::info("chats are",[$chats->toArray()]);
+        // Log::info("chats are",[$chats->toArray()]);
         return $chats;
 }
 
