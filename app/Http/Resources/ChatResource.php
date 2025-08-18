@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
@@ -63,7 +64,7 @@ class ChatResource extends JsonResource
             'agent'         => new UserMiniResource($this->whenLoaded('agent')),
 
             // ✅ expose it here
-            'unread_count'  => $unreadCount,
+            'unread_count'  => Message::where('chat_id', $this->id)->where('is_read', false)->where('sender_id', '!=', $currentUserId)->count(),
         ];
     }
 }
