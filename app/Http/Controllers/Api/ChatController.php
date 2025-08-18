@@ -50,7 +50,7 @@ class ChatController extends Controller
             $receiverId = $chat->user_id === Auth::id()
                 ? $chat->user_2_id
                 : $chat->user_id;
-                  $replyToId = $sendMessageRequest->input('reply_to_id');
+            $replyToId = $sendMessageRequest->input('reply_to_id');
             $parent = null;
             if ($replyToId) {
                 $parent = Message::query()
@@ -83,59 +83,59 @@ class ChatController extends Controller
             // Load necessary relationships
             $message->load('sender', 'receiver', 'originalMessage');
             try {
-            $senderName = optional($message->sender)->name ?? 'Someone';
-            $type       = (string) $sendMessageRequest->input('type');
+                $senderName = optional($message->sender)->name ?? 'Someone';
+                $type       = (string) $sendMessageRequest->input('type');
 
-            switch ($type) {
-                case 'text':
-                    $preview = Str::of((string)($message->message ?? ''))->squish()->limit(80, '…');
-                    $title = "{$senderName} sent you a message";
-                    $body  = $preview !== '' ? (string) $preview : 'You received a new message';
-                    break;
+                switch ($type) {
+                    case 'text':
+                        $preview = Str::of((string)($message->message ?? ''))->squish()->limit(80, '…');
+                        $title = "{$senderName} sent you a message";
+                        $body  = $preview !== '' ? (string) $preview : 'You received a new message';
+                        break;
 
-                case 'image':
-                    $title = "{$senderName} sent you a photo";
-                    $body  = 'Tap to view';
-                    break;
+                    case 'image':
+                        $title = "{$senderName} sent you a photo";
+                        $body  = 'Tap to view';
+                        break;
 
-                case 'file':
-                    $title = "{$senderName} sent you a file";
-                    // adjust "file_name" to your column if different
-                    $body  = $message->file_name ?? 'Tap to open';
-                    break;
+                    case 'file':
+                        $title = "{$senderName} sent you a file";
+                        // adjust "file_name" to your column if different
+                        $body  = $message->file_name ?? 'Tap to open';
+                        break;
 
-                case 'voice':
-                    $title = "{$senderName} sent you a voice note";
-                    $sec   = (int) ($message->duration ?? 0);
-                    $body  = $sec > 0 ? "Voice note · {$sec}s" : 'Tap to listen';
-                    break;
+                    case 'voice':
+                        $title = "{$senderName} sent you a voice note";
+                        $sec   = (int) ($message->duration ?? 0);
+                        $body  = $sec > 0 ? "Voice note · {$sec}s" : 'Tap to listen';
+                        break;
 
-                case 'order': // aka "form"
-                    $title = "{$senderName} sent you a form";
-                    // adjust "order_id" to your column if different
-                    $body  = isset($message->order_id) ? "Form · #{$message->order_id}" : 'Tap to view';
-                    break;
+                    case 'order': // aka "form"
+                        $title = "{$senderName} sent you a form";
+                        // adjust "order_id" to your column if different
+                        $body  = isset($message->order_id) ? "Form · #{$message->order_id}" : 'Tap to view';
+                        break;
 
-                default:
-                    $title = "{$senderName} sent you a message";
-                    $body  = 'Tap to view';
+                    default:
+                        $title = "{$senderName} sent you a message";
+                        $body  = 'Tap to view';
+                }
+
+                // Optional deep-link metadata (safe to remove if unused)
+                $meta = [
+                    'chat_id'    => $message->chat_id,
+                    'message_id' => $message->id,
+                    'type'       => $type,
+                ];
+
+                NotificationService::sendToUserById($message->receiver_id, $title, $body, $meta);
+            } catch (\Throwable $notifyEx) {
+                Log::warning('Notification send failed: ' . $notifyEx->getMessage(), [
+                    'chat_id'     => $message->chat_id ?? null,
+                    'message_id'  => $message->id ?? null,
+                    'receiver_id' => $message->receiver_id ?? null,
+                ]);
             }
-
-            // Optional deep-link metadata (safe to remove if unused)
-            $meta = [
-                'chat_id'    => $message->chat_id,
-                'message_id' => $message->id,
-                'type'       => $type,
-            ];
-
-            NotificationService::sendToUserById($message->receiver_id, $title, $body, $meta);
-        } catch (\Throwable $notifyEx) {
-            Log::warning('Notification send failed: '.$notifyEx->getMessage(), [
-                'chat_id'     => $message->chat_id ?? null,
-                'message_id'  => $message->id ?? null,
-                'receiver_id' => $message->receiver_id ?? null,
-            ]);
-        }
 
             return ResponseHelper::success(new MessageResource($message), 'Message sent successfully.', 201);
         } catch (\Exception $e) {
@@ -154,7 +154,14 @@ class ChatController extends Controller
             if (!$chat) {
                 return ResponseHelper::error('Chat not found.', 404);
             }
-            $messages = $chat->messages()->with(['sender', 'receiver', 'originalMessage'])->get();
+            $messages = $chat->messages()
+                ->with([
+                    'sender',
+                    'receiver',
+                    'originalMessage',
+                    'replyTo:id,chat_id,type,message' // minimal fields for preview/accessor
+                ])
+                ->get();
             $order = Order::where('chat_id', '=', $chatId)->first();
 
             $userId = Auth::id();
@@ -165,7 +172,7 @@ class ChatController extends Controller
                 ->where('is_read', false)
                 ->update(['is_read' => true]);
             return ResponseHelper::success([
-                'chat'=>$chat,
+                'chat' => $chat,
                 'order' => $order,
                 'messages' => MessageResource::collection($messages),
             ], 'Chat messages fetched successfully.');
@@ -263,7 +270,7 @@ class ChatController extends Controller
             Log::error('Error fetching chats: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
             ]);
-            return ResponseHelper::error('An error occurred while fetching chats.'.$e->getMessage(), 500);
+            return ResponseHelper::error('An error occurred while fetching chats.' . $e->getMessage(), 500);
         }
     }
     public function createPayment(CreatePaymentRequest $request)
@@ -366,7 +373,7 @@ class ChatController extends Controller
                 'user_id' => Auth::id(),
                 'request_data' => $request->all(),
             ]);
-            return ResponseHelper::error('An error occurred while forwarding the message.'.$e->getMessage(), 500);
+            return ResponseHelper::error('An error occurred while forwarding the message.' . $e->getMessage(), 500);
         }
     }
 }
