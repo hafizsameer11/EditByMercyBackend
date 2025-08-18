@@ -12,19 +12,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-        $table->string('reply_preview')->nullable();
-        $table->unsignedBigInteger('reply_to_id')->nullable();
-        $table->foreign('reply_to_id')->references('id')->on('messages');
+            $table->string('reply_preview')->nullable()->after('message');
+            $table->unsignedBigInteger('reply_to_id')->nullable()->after('reply_preview');
+
+            // index + fk (set null on delete to avoid cascades blowing history)
+            $table->index('reply_to_id', 'messages_reply_to_id_idx');
+            $table->foreign('reply_to_id', 'messages_reply_to_id_fk')
+                ->references('id')->on('messages')
+                ->onDelete('set null');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            //
+            // drop FK and column in reverse order
+            $table->dropForeign('messages_reply_to_id_fk');
+            $table->dropIndex('messages_reply_to_id_idx');
+            $table->dropColumn(['reply_preview', 'reply_to_id']);
         });
     }
+
 };

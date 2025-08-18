@@ -32,6 +32,7 @@ class SendMessageRequest extends FormRequest
             'order_id' => 'nullable|exists:orders,id',
             'is_forwarded' => 'nullable|boolean',
             'original_id' => 'nullable|exists:messages,id',
+            'reply_to_id' => 'nullable',
         ];
     }
     protected function failedValidation(Validator $validator)

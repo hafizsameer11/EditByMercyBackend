@@ -50,10 +50,33 @@ class ChatController extends Controller
             $receiverId = $chat->user_id === Auth::id()
                 ? $chat->user_2_id
                 : $chat->user_id;
+                  $replyToId = $sendMessageRequest->input('reply_to_id');
+            $parent = null;
+            if ($replyToId) {
+                $parent = Message::query()
+                    ->where('id', $replyToId)
+                    ->where('chat_id', $chatId)
+                    ->first();
+
+                if (!$parent) {
+                    return ResponseHelper::error('Invalid reply_to_id (not in this chat).', 422);
+                }
+            }
+
+            // Build DTO (will compute preview if client didn't send it)
+            $messageDto = MessageDTO::fromRequest($sendMessageRequest)
+                ->withReceiverId($receiverId)
+                ->withChatId($chatId);
+
+            // Defensive: if still missing preview but we have a parent, compute now
+            if ($messageDto->reply_to_id && !$messageDto->reply_preview) {
+                $messageDto->reply_preview = MessageDTO::generatePreviewFromParent($parent);
+            }
+
 
             // Build DTO and attach receiver ID dynamically
-            $messageDto = MessageDTO::fromRequest($sendMessageRequest)
-                ->withReceiverId($receiverId);
+            // $messageDto = MessageDTO::fromRequest($sendMessageRequest)
+            //     ->withReceiverId($receiverId);
 
             $message = $this->chatService->sendMessage($chatId, $messageDto);
 
