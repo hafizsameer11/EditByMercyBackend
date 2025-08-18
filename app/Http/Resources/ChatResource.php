@@ -24,27 +24,7 @@ class ChatResource extends JsonResource
         $isUserA = $this->user_id === $currentUserId;
 
         // Resolve unread_count with best available source.
-        $unreadCount = null;
-
-        // 1) Prefer withCount('messages as unread_count' ...) if present
-        if (isset($this->unread_count)) {
-            $unreadCount = (int) $this->unread_count;
-        }
-        // 2) If messages relation is loaded, count on the collection (no extra query)
-        elseif ($this->relationLoaded('messages')) {
-            $unreadCount = $this->messages
-                ->where('is_read', false)
-                ->where('sender_id', '!=', $currentUserId)
-                ->count();
-        }
-        // 3) Fallback: run a tiny count query
-        else {
-            $unreadCount = $this->messages()
-                ->where('is_read', false)
-                ->where('sender_id', '!=', $currentUserId)
-                ->count();
-        }
-
+    
         return [
             'id'            => $this->id ?? null,
             'type'          => $this->type ?? 'chat',
