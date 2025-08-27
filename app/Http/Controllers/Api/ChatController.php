@@ -355,7 +355,8 @@ class ChatController extends Controller
               $data = [
                 'original_message_id' => $forwardMessageId,
                 'receiver_id' => $receiverId,
-                'chatId'=>$chatById->id
+                'chatId'=>$chatById->id,
+                'chat' => $chatById
             ];
             $newMessage = Message::create([
                 'chat_id' => $chatById->id,
