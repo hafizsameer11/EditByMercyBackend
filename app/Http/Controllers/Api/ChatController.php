@@ -347,14 +347,16 @@ class ChatController extends Controller
         try {
             $forwardMessageId = $request->original_message_id;
             $receiverId = $request->receiver_id;
-            $data = [
-                'original_message_id' => $forwardMessageId,
-                'receiver_id' => $receiverId
-            ];
+          
 
             $chatById = $this->chatService->getChatByUserIdSIngle($request->receiver_id);
             $originalMessage = Message::find($forwardMessageId);
             //
+              $data = [
+                'original_message_id' => $forwardMessageId,
+                'receiver_id' => $receiverId,
+                'chatId'=>$chatById->id
+            ];
             $newMessage = Message::create([
                 'chat_id' => $chatById->id,
                 'sender_id' => Auth::id(),
