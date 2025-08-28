@@ -22,7 +22,7 @@ class Message extends Model
         'original_id',
         'is_read',
         'form_id',
-          'reply_to_id','reply_preview',
+        'reply_to_id','reply_preview',
 
     ];
 

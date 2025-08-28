@@ -51,6 +51,7 @@ class MessageResource extends JsonResource
             'created_at'   => $this->created_at ?? null,
             'updated_at'   => $this->updated_at ?? null,
             'form_id'      => $this->form_id ?? null,
+            'is_read'=>$this->is_read ?? null,
 
             'sender'   => new UserMiniResource($this->whenLoaded('sender')),
             'receiver' => new UserMiniResource($this->whenLoaded('receiver')),
