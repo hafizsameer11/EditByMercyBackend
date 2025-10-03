@@ -418,6 +418,7 @@ class ChatController extends Controller
             // $messageId = $request->message_id;
             $message=Message::where('id',$id)->first();
             $message->message=$request->message;
+            $message->is_edited=true;
             $message->save();
             return ResponseHelper::success(null, 'Message edited successfully.');
         } catch (\Exception $e) {
