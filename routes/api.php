@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\QuestionnaireController;
 use App\Http\Controllers\Api\QuickReplyController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\QuestionareController;
 use Illuminate\Http\Request;
@@ -100,6 +101,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/delete-message/{id}', [ChatController::class, 'deleteMessage']);
     Route::post('/edit-message/{id}', [ChatController::class, 'editMessage']);
     Route::post('/downloaded/{id}', [ChatController::class, 'downloaded']);
+  
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [UserController::class, 'createUser']);
@@ -107,3 +109,5 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::get('questionnaire', [QuestionareController::class, 'getQuestionnaire']);
 });
 
+  Route::post('auth/social/{provider}', [SocialAuthController::class, 'loginWithToken'])
+    ->whereIn('provider', ['google', 'facebook']);

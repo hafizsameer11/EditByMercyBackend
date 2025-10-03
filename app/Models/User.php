@@ -29,6 +29,8 @@ class User extends Authenticatable
         'otp',
         'profile_picture',
         'phone',
+        'oauth_provider',
+        'oauth_id',
     ];
 
     /**
