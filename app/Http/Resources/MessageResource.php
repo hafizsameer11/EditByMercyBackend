@@ -63,6 +63,7 @@ class MessageResource extends JsonResource
             'reply_preview' => $this->reply_preview,
             'is_deleted'=>$this->is_deleted,
             'is_edited'=>$this->is_edited,
+            'is_downloaded'=>$this->is_downloaded,
 
             'reply_to' => $this->whenLoaded('replyTo', fn () => [
                 'id'      => $this->replyTo->id,
