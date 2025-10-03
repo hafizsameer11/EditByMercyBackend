@@ -106,4 +106,3 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::get('questionnaire', [QuestionareController::class, 'getQuestionnaire']);
 });
 
-// for messages first call /assign-agent then call /send-message and for chat details you can use /chat/{id} and for all chats you can use /chats
