@@ -429,4 +429,18 @@ class ChatController extends Controller
             return ResponseHelper::error('An error occurred while editing the message.' . $e->getMessage(), 500);
         }
     }
+    public function downloaded($id){
+        try {
+            $message = Message::find($id);
+            $message->is_downloaded = true;
+            $message->save();
+            return ResponseHelper::success(null, 'Message downloaded successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error downloading message: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                // 'request_data' => $request->all(),
+            ]);
+            return ResponseHelper::error('An error occurred while downloading the message.' . $e->getMessage(), 500);
+        }
+    }
 }
