@@ -23,6 +23,10 @@ class Message extends Model
         'is_read',
         'form_id',
         'reply_to_id','reply_preview',
+        'is_deleted',
+        'is_edited',
+        'is_downloaded',
+
 
     ];
 

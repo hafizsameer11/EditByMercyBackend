@@ -11,6 +11,8 @@ class Chat extends Model
         'user_id',
         'user_2_id',
         'agent_id',
+        'is_deleted_by_user',
+        'is_deleted_by_admin',
     ];
 
     // public function messages(): HasMany

@@ -14,6 +14,7 @@ use App\Http\Requests\SendMessageRequest;
 use App\Http\Resources\AssignedAgentViewModel;
 use App\Http\Resources\ChatResource;
 use App\Http\Resources\MessageResource;
+use App\Models\Chat;
 use App\Models\Message;
 use App\Models\Order;
 use App\Models\User;
@@ -377,6 +378,54 @@ class ChatController extends Controller
                 'request_data' => $request->all(),
             ]);
             return ResponseHelper::error('An error occurred while forwarding the message.' . $e->getMessage(), 500);
+        }
+    }
+
+    public function deleteChat(Request $request,$id)
+    {
+        try {
+            $chat=Chat::where('id',$id)->first();
+            $chat->is_deleted_by_user=true;
+            $chat->save();
+
+            return ResponseHelper::success(null, 'Chat deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error deleting chat: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+            ]);
+            return ResponseHelper::error('An error occurred while deleting the chat.' . $e->getMessage(), 500);
+        }
+    }
+    public function deleteMessage(Request $request,$id)
+    {
+        try {
+            $message=Message::where('id',$id)->first();
+            $message->is_deleted=true;
+            $message->save();
+            return ResponseHelper::success(null, 'Message deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error deleting message: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+            ]);
+            return ResponseHelper::error('An error occurred while deleting the message.' . $e->getMessage(), 500);
+        }
+    }
+    public function editMessage(Request $request,$id)
+    {
+        try {
+            // $messageId = $request->message_id;
+            $message=Message::where('id',$id)->first();
+            $message->message=$request->message;
+            $message->save();
+            return ResponseHelper::success(null, 'Message edited successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error editing message: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+            ]);
+            return ResponseHelper::error('An error occurred while editing the message.' . $e->getMessage(), 500);
         }
     }
 }

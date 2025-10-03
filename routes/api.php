@@ -95,6 +95,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/get-notifications', [NotificationController::class, 'index']);
     Route::get('/get-notifications-count', [NotificationController::class, 'count']);
     Route::post('/mark-notification-as-read/{id}', [NotificationController::class, 'markAsRead']);
+
+    Route::post('/delete-chat/{id}', [ChatController::class, 'deleteChat']);
+    Route::post('/delete-message/{id}', [ChatController::class, 'deleteMessage']);
+    Route::post('/edit-message/{id}', [ChatController::class, 'editMessage']);
 });
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('/create-user', [UserController::class, 'createUser']);
