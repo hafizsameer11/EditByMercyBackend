@@ -42,7 +42,7 @@ class ChatController extends Controller
     public function sendMessage(SendMessageRequest $sendMessageRequest)
     {
         try {
-            $chatId = $sendMessageRequest->get('chat_id');
+            $chatId = $sendMessageRequest->input('chat_id');
             
 
             // Get chat participants
