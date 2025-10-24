@@ -43,6 +43,7 @@ class ChatController extends Controller
     {
         try {
             $chatId = $sendMessageRequest->get('chat_id');
+            
 
             // Get chat participants
             $chat = \App\Models\Chat::findOrFail($chatId);
@@ -192,48 +193,55 @@ class ChatController extends Controller
             $authUserId = Auth::id();
             $serviceType = $request->input('service_type');
 
-            // 1. Get agent
-            $agent = $this->userService->getSupportAgent();
+            // STEP 1: Check if user already has a pending/active order for this service type
+            // This ensures only ONE active chat per service category
+            $existingPendingOrder = Order::where('user_id', $authUserId)
+                ->where('service_type', $serviceType)
+                ->whereIn('status', ['pending', 'processing']) // Not closed yet
+                ->whereHas('chat') // Make sure chat still exists
+                ->with(['chat.participantA', 'chat.participantB', 'chat.agent', 'chat.messages', 'chat.order'])
+                ->first();
 
-            // 2. Check if chat exists between the two
-            $chat = $this->chatService->findChatBetweenUsers($authUserId, $agent->id ?? null);
-
-            // If chat exists
-            if ($chat) {
-                // Check if it has a pending order with the same service type
-                $pendingOrder = $chat->order()
-                    ->where('service_type', $serviceType)
-                    ->where('status', 'pending')
-                    ->first();
-
-                if ($pendingOrder) {
-                    // Return the existing chat with loaded relationships
-                    $data = $chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
-                    return ResponseHelper::success(new AssignedAgentViewModel($data), 'Existing pending order chat found.', 200);
-                }
-
-                // Check if chat has successful order
-                $successfulOrder = $chat->order()
-                    ->where('service_type', $serviceType)
-                    ->where('status', 'success')
-                    ->first();
-
-                if ($successfulOrder) {
-                    // Create new order inside same chat
-                    $newOrderDTO = new OrderDTO(
-                        user_id: $authUserId,
-                        agent_id: $agent->id ?? null,
-                        service_type: $serviceType,
-                        chat_id: $chat->id ?? null
-                    );
-                    $this->orderService->createOrder($newOrderDTO);
-
-                    $data = $chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
-                    return ResponseHelper::success(new AssignedAgentViewModel($data), 'New order created in existing chat.', 201);
-                }
+            if ($existingPendingOrder && $existingPendingOrder->chat) {
+                // User already has an active order for this service type
+                // Redirect them to the existing chat
+                return ResponseHelper::success(
+                    new AssignedAgentViewModel($existingPendingOrder->chat),
+                    'You already have an active order for this service. Please complete or close the current order before starting a new one.',
+                    200
+                );
             }
 
-            // If no existing chat or suitable order, create new chat
+            // STEP 2: Check if user has a completed order for this service type
+            $completedOrder = Order::where('user_id', $authUserId)
+                ->where('service_type', $serviceType)
+                ->where('status', 'success')
+                ->whereHas('chat') // Make sure chat still exists
+                ->with('chat')
+                ->latest()
+                ->first();
+
+            if ($completedOrder && $completedOrder->chat) {
+                // User has a completed order - create new order in the same chat
+                $newOrderDTO = new OrderDTO(
+                    user_id: $authUserId,
+                    agent_id: $completedOrder->agent_id,
+                    service_type: $serviceType,
+                    chat_id: $completedOrder->chat_id
+                );
+                $this->orderService->createOrder($newOrderDTO);
+
+                $data = $completedOrder->chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
+                return ResponseHelper::success(
+                    new AssignedAgentViewModel($data),
+                    'New order created in your existing chat for this service.',
+                    201
+                );
+            }
+
+            // STEP 3: No existing orders for this service type - create new chat
+            $agent = $this->userService->getSupportAgent();
+
             $chatDto = new ChatDTO(
                 type: 'user-agent',
                 user_id: $authUserId,
@@ -251,7 +259,11 @@ class ChatController extends Controller
             $this->orderService->createOrder($orderDto);
 
             $data = $chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
-            return ResponseHelper::success(new AssignedAgentViewModel($data), 'New chat and order created.', 201);
+            return ResponseHelper::success(
+                new AssignedAgentViewModel($data),
+                'New chat and order created successfully.',
+                201
+            );
         } catch (\Exception $e) {
             Log::error('Error assigning agent: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
