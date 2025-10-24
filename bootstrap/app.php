@@ -13,7 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Register UpdateLastSeenAt middleware
+        $middleware->alias([
+            'track.activity' => \App\Http\Middleware\UpdateLastSeenAt::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

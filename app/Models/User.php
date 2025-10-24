@@ -32,6 +32,7 @@ class User extends Authenticatable
         'oauth_provider',
         'oauth_id',
         'fcmToken',
+        'last_seen_at',
     ];
 
     /**
@@ -53,6 +54,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_seen_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -83,10 +85,32 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is online (has fcm token).
+     * Check if user is online based on last activity.
+     * User is considered online if they were active within the last 5 minutes.
      */
     public function isOnline()
     {
-        return !empty($this->fcmToken);
+        if (!$this->last_seen_at) {
+            return false;
+        }
+        
+        // User is online if last seen within 5 minutes
+        return $this->last_seen_at->gt(now()->subMinutes(5));
+    }
+
+    /**
+     * Get human-readable last seen time.
+     */
+    public function getLastSeenAttribute()
+    {
+        if (!$this->last_seen_at) {
+            return 'Never';
+        }
+
+        if ($this->isOnline()) {
+            return 'Online';
+        }
+
+        return $this->last_seen_at->diffForHumans();
     }
 }

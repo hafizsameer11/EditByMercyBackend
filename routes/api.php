@@ -52,10 +52,58 @@ Route::prefix('auth')->group(function () {
     Route::post('/verify-code', [AuthController::class, 'verifyCode']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 });
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', 'track.activity'])->group(function () {
 
     Route::post('edit-profile', [AuthController::class, 'editPorfile']);
     Route::post('/set-fcm-token', [AuthController::class, 'setFcmToken']);
+    
+    // Heartbeat endpoint for keeping user online
+    Route::post('/heartbeat', function () {
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Heartbeat received',
+            'timestamp' => now()->toIso8601String()
+        ]);
+    });
+
+    // Check user online status
+    Route::get('/user/{userId}/online-status', function ($userId) {
+        try {
+            $user = \App\Models\User::findOrFail($userId);
+            
+            return \App\Helpers\ResponseHelper::success([
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'is_online' => $user->isOnline(),
+                'last_seen' => $user->last_seen,
+                'last_seen_at' => $user->last_seen_at ? $user->last_seen_at->toIso8601String() : null,
+            ], 'User status fetched successfully', 200);
+        } catch (\Exception $e) {
+            return \App\Helpers\ResponseHelper::error('User not found', 404);
+        }
+    });
+
+    // Check multiple users online status (bulk check)
+    Route::post('/users/online-status', function (\Illuminate\Http\Request $request) {
+        $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'integer|exists:users,id'
+        ]);
+
+        $users = \App\Models\User::whereIn('id', $request->user_ids)->get();
+        
+        $statuses = $users->map(function ($user) {
+            return [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'is_online' => $user->isOnline(),
+                'last_seen' => $user->last_seen,
+                'last_seen_at' => $user->last_seen_at ? $user->last_seen_at->toIso8601String() : null,
+            ];
+        });
+
+        return \App\Helpers\ResponseHelper::success($statuses, 'User statuses fetched successfully', 200);
+    });
 
     Route::post('/send-message', [ChatController::class, 'sendMessage']);
     Route::post('/forward-message', [ChatController::class, 'forwardMessage']);

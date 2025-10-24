@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ManageAdminController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\OrdersController;
+use App\Http\Controllers\Admin\QuestionnaireManagementController;
 use App\Http\Controllers\Admin\TransactionsController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserManagementController;
@@ -130,7 +131,29 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
     
     // ============================================
-    // Questionnaire Management Routes (Skip for now)
+    // Questionnaire Management Routes
+    // ============================================
+    Route::prefix('questionnaire-management')->group(function () {
+        // Questionnaire Categories CRUD
+        Route::get('/', [QuestionnaireManagementController::class, 'index']); // Get all questionnaires with stats
+        Route::get('/{id}', [QuestionnaireManagementController::class, 'show']); // Get single questionnaire
+        Route::post('/', [QuestionnaireManagementController::class, 'store']); // Create new questionnaire
+        Route::put('/{id}', [QuestionnaireManagementController::class, 'update']); // Update questionnaire
+        Route::delete('/{id}', [QuestionnaireManagementController::class, 'destroy']); // Delete questionnaire
+        Route::post('/{id}/toggle-status', [QuestionnaireManagementController::class, 'toggleStatus']); // Toggle active status
+        
+        // Questions Management
+        Route::post('/{id}/questions', [QuestionnaireManagementController::class, 'addQuestion']); // Add question to questionnaire
+        Route::put('/questions/{questionId}', [QuestionnaireManagementController::class, 'updateQuestion']); // Update question
+        Route::delete('/questions/{questionId}', [QuestionnaireManagementController::class, 'deleteQuestion']); // Delete question
+        Route::post('/{id}/reorder-questions', [QuestionnaireManagementController::class, 'reorderQuestions']); // Reorder questions
+        
+        // Helper Routes
+        Route::get('/meta/question-types', [QuestionnaireManagementController::class, 'getQuestionTypes']); // Get available question types
+    });
+    
+    // ============================================
+    // Old Questionnaire Routes (Legacy - Keep for backward compatibility)
     // ============================================
     Route::prefix('questionnaire')->group(function () {
         Route::post('/', [QuestionareController::class, 'storeOrUpdateQuestionnaire']);

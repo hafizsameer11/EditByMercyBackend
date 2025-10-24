@@ -799,11 +799,44 @@ Create new category.
 
 ---
 
-## 📝 QUESTIONNAIRE API (Skipped for now)
+## 📋 QUESTIONNAIRE MANAGEMENT API
 
-These endpoints exist but are not fully implemented:
-- `POST /api/admin/questionnaire` - Create/update questionnaire
-- `GET /api/admin/questionnaire` - Get questionnaire
+Complete CRUD API for managing questionnaires and questions dynamically.
+
+**See full documentation:** `ADMIN_QUESTIONNAIRE_API.md`
+
+**Base URL:** `/api/admin/questionnaire-management`
+
+### Quick Reference
+
+**Questionnaire Management:**
+- `GET /` - List all with stats
+- `GET /{id}` - Get details
+- `POST /` - Create new
+- `PUT /{id}` - Update
+- `DELETE /{id}` - Delete
+- `POST /{id}/toggle-status` - Toggle active status
+
+**Question Management:**
+- `POST /{id}/questions` - Add question
+- `PUT /questions/{questionId}` - Update question
+- `DELETE /questions/{questionId}` - Delete question
+- `POST /{id}/reorder-questions` - Reorder questions
+
+**Helper:**
+- `GET /meta/question-types` - Get available question types
+
+**Question Types:** `select`, `toggle`, `radioGroup`, `textarea`
+
+---
+
+## 📝 OLD QUESTIONNAIRE API (Legacy)
+
+These endpoints exist for backward compatibility:
+- `POST /api/admin/questionnaire` - Create/update questionnaire (old)
+- `GET /api/admin/questionnaire` - Get questionnaire (old)
+
+**⚠️ Use the new `/questionnaire-management` API for new implementations.**
 
 ---
 
@@ -828,6 +861,7 @@ These endpoints exist but are not fully implemented:
 - `/app/Http/Controllers/Admin/ManageAdminController.php` - Admin user management
 - `/app/Http/Controllers/Admin/NotificationsController.php` - Send notifications to users
 - `/app/Http/Controllers/Admin/BannersController.php` - Banner/Feed management
+- `/app/Http/Controllers/Admin/QuestionnaireManagementController.php` - **NEW** Questionnaire CRUD management
 
 ### Models Updated
 - `/app/Models/User.php` - Added fcmToken to fillable, added relations (orders, chats, isOnline)
