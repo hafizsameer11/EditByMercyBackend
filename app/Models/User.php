@@ -31,6 +31,7 @@ class User extends Authenticatable
         'phone',
         'oauth_provider',
         'oauth_id',
+        'fcmToken',
     ];
 
     /**
@@ -62,5 +63,30 @@ class User extends Authenticatable
         }
 
         return asset('storage/'.$value);
+    }
+
+    /**
+     * Get the orders for the user.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'user_id');
+    }
+
+    /**
+     * Get the chats where user is participant.
+     */
+    public function chats()
+    {
+        return $this->hasMany(Chat::class, 'user_id')
+            ->orWhere('user_2_id', $this->id);
+    }
+
+    /**
+     * Check if user is online (has fcm token).
+     */
+    public function isOnline()
+    {
+        return !empty($this->fcmToken);
     }
 }

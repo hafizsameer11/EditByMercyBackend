@@ -41,6 +41,10 @@ Route::get('/migrate/rollback', function () {
     Artisan::call('migrate:rollback');
     return response()->json(['message' => 'Migration rollback successfully'], 200);
 });
+Route::get('/seed/questionnaire', function () {
+    Artisan::call('db:seed', ['--class' => 'QuestionnaireSeeder']);
+    return response()->json(['message' => 'Questionnaire seeder ran successfully'], 200);
+});
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -64,6 +68,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/update-order-status', [ChatController::class, 'updateOrderStatus']);
     // Route::post('/check-current-order')
     //routes for questionare for user and agent
+    Route::get('/questionnaire/all', [QuestionnaireController::class, 'getAll']);
     Route::post('questionnaire/assign', [QuestionareController::class, 'assignToUser']);
     Route::post('/questionnaire/save-answer', [QuestionnaireController::class, 'saveAnswer']);
     Route::get('/questionnaire/progress/{chat_id}', [QuestionnaireController::class, 'getProgress']);
@@ -103,11 +108,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/downloaded/{id}', [ChatController::class, 'downloaded']);
   
 });
-Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
-    Route::post('/create-user', [UserController::class, 'createUser']);
-    Route::post('/questionnaire', [QuestionareController::class, 'storeOrUpdateQuestionnaire']);
-    Route::get('questionnaire', [QuestionareController::class, 'getQuestionnaire']);
+
+// Admin Routes - Loaded from separate file
+Route::prefix('admin')->group(function () {
+    require __DIR__.'/admin.php';
 });
 
-  Route::post('auth/social/{provider}', [SocialAuthController::class, 'loginWithToken'])
+Route::post('auth/social/{provider}', [SocialAuthController::class, 'loginWithToken'])
     ->whereIn('provider', ['google', 'facebook']);

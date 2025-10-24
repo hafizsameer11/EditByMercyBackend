@@ -2,94 +2,164 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ResponseHelper;
 use App\Http\Controllers\Controller;
-use App\Models\ChatQuestionnaireAnswer;
+use App\Models\Questionnaire;
+use App\Models\QuestionnaireAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class QuestionnaireController extends Controller
 {
-    // public function saveAnswer(Request $request)
-    // {
-    //     $request->validate([
-    //         'chat_id' => 'required|integer',
-    //         'user_id' => 'required|integer',
-    //         'answers' => 'required|array',
-    //     ]);
-
-    //     $record = ChatQuestionnaireAnswer::updateOrCreate(
-    //         ['chat_id' => $request->chat_id, 'user_id' => $request->user_id],
-    //         ['answers' => $request->answers]
-    //     );
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'Answers saved successfully.',
-    //         'data' => $record
-    //     ]);
-    // }
-
-    public function saveAnswer(Request $request)
+    /**
+     * Get all questionnaire categories and questions
+     * GET /api/questionnaire/all
+     */
+    public function getAll()
     {
-        $request->validate([
-            'chat_id' => 'required|integer',
-            'user_id' => 'required|integer',
-            'answers' => 'required|array',
-        ]);
+        try {
+            $questionnaires = Questionnaire::with('questions')
+                ->where('is_active', true)
+                ->orderBy('order')
+                ->get();
 
-        $existing = ChatQuestionnaireAnswer::where('chat_id', $request->chat_id)
-            ->where('user_id', $request->user_id)
-            ->first();
+            $formattedData = $questionnaires->map(function ($questionnaire) {
+                return [
+                    'id' => $questionnaire->id,
+                    'title' => $questionnaire->title,
+                    'icon' => $questionnaire->icon,
+                    'color' => $questionnaire->color,
+                    'description' => $questionnaire->description,
+                    'questions' => $questionnaire->questions->map(function ($question) {
+                        $formatted = [
+                            'id' => $question->id,
+                            'type' => $question->type,
+                            'stateKey' => $question->state_key,
+                            'order' => $question->order,
+                        ];
 
-        if ($existing) {
-            $currentAnswers = $existing->answers ?? [];
+                        if ($question->label) {
+                            $formatted['label'] = $question->label;
+                        }
 
-            if (!is_array($currentAnswers)) {
-                $currentAnswers = json_decode($currentAnswers, true) ?? [];
-            }
+                        if ($question->options) {
+                            $formatted['options'] = $question->options;
+                        }
 
-            // 🧠 Merge the new answers into the existing object
-            $mergedAnswers = array_merge($currentAnswers, $request->answers);
+                        return $formatted;
+                    })->values()
+                ];
+            })->values();
 
-            $existing->answers = $mergedAnswers;
-            $existing->save();
+            return ResponseHelper::success($formattedData, 'Questionnaires fetched successfully', 200);
 
-            $record = $existing;
-        } else {
-            $record = ChatQuestionnaireAnswer::create([
-                'chat_id' => $request->chat_id,
-                'user_id' => $request->user_id,
-                'answers' => $request->answers,
-            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch questionnaire: ' . $e->getMessage());
+            return ResponseHelper::error('Failed to fetch questionnaire: ' . $e->getMessage(), 500);
         }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Answers saved successfully.',
-            'data' => $record
-        ]);
     }
 
-
-    public function getProgress($chat_id)
+    /**
+     * Save questionnaire answers
+     * POST /api/questionnaire/save-answer
+     */
+    public function saveAnswer(Request $request)
     {
-        $record = ChatQuestionnaireAnswer::where('chat_id', $chat_id)->first();
-        Log::info('Chat ID: ' . $chat_id);
-        if (!$record) {
-            return response()->json(['status' => 'success', 'progress' => 0, 'completed_sections' => 0]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'chat_id' => 'required|exists:chats,id',
+                'user_id' => 'required|exists:users,id',
+                'answers' => 'required|array'
+            ]);
+
+            if ($validator->fails()) {
+                return ResponseHelper::error($validator->errors()->first(), 422);
+            }
+
+            $chatId = $request->chat_id;
+            $userId = $request->user_id;
+            $newAnswers = $request->answers;
+
+            // Find or create answer record
+            $answerRecord = QuestionnaireAnswer::firstOrNew(['chat_id' => $chatId]);
+
+            // Merge new answers with existing ones
+            $existingAnswers = $answerRecord->answers ?? [];
+            $mergedAnswers = array_merge($existingAnswers, $newAnswers);
+
+            // Calculate completed sections based on answered questions
+            $completedSections = $this->calculateCompletedSections($mergedAnswers);
+            
+            // Calculate progress percentage
+            $totalSections = 14; // 1 (Face) + 3 (Skin) + 10 (Body)
+            $progress = (int) (($completedSections / $totalSections) * 100);
+
+            // Update or create the record
+            $answerRecord->user_id = $userId;
+            $answerRecord->answers = $mergedAnswers;
+            $answerRecord->completed_sections = $completedSections;
+            $answerRecord->progress = $progress;
+            $answerRecord->save();
+
+            return ResponseHelper::success([
+                'completed_sections' => $completedSections,
+                'progress' => $progress
+            ], 'Answers saved successfully', 200);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to save answers: ' . $e->getMessage());
+            return ResponseHelper::error('Failed to save answers: ' . $e->getMessage(), 500);
         }
+    }
 
-        Log::info('Raw answers value: ', [$record->answers]);
+    /**
+     * Get progress for a specific chat
+     * GET /api/questionnaire/progress/{chat_id}
+     */
+    public function getProgress($chatId)
+    {
+        try {
+            $answerRecord = QuestionnaireAnswer::where('chat_id', $chatId)->first();
 
-        $answers = is_array($record->answers) ? $record->answers : json_decode($record->answers, true);
+            if (!$answerRecord) {
+                return ResponseHelper::success([
+                    'progress' => 0,
+                    'completed_sections' => 0,
+                    'answers' => []
+                ], 'No progress found', 200);
+            }
 
-        Log::info('Decoded answers array: ', $answers);
+            return ResponseHelper::success([
+                'progress' => $answerRecord->progress,
+                'completed_sections' => $answerRecord->completed_sections,
+                'answers' => $answerRecord->answers
+            ], 'Progress fetched successfully', 200);
 
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch progress: ' . $e->getMessage());
+            return ResponseHelper::error('Failed to fetch progress: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Calculate completed sections based on answers
+     */
+    private function calculateCompletedSections($answers)
+    {
+        $count = 0;
+
+        // Define the state keys for each section
         $sectionKeys = [
-            'selectedFace', // Category 1
+            // Face (1)
+            'selectedFace',
+            
+            // Skin (3)
             'maintainSkinTone',
             'selectedLighter',
-            'selectedDarker', // Category 2
+            'selectedDarker',
+            
+            // Body (10)
             'eyes',
             'lips',
             'selectedHips',
@@ -99,33 +169,45 @@ class QuestionnaireController extends Controller
             'selectedTummy',
             'chin',
             'arm',
-            'other' // Category 3
+            'other'
         ];
 
-        $filled = array_filter($sectionKeys, fn($key) => !empty($answers[$key] ?? null));
-
-        return response()->json([
-            'status' => 'success',
-            'progress' => round(count($filled) / count($sectionKeys) * 100),
-            'completed_sections' => count($filled),
-            'debug_answers' => $answers, // <-- Optional debug help
-            'raw' => $record->answers     // <-- Optional raw value
-        ]);
-    }
-
-
-
-    public function getAnswers($chat_id)
-    {
-        $record = ChatQuestionnaireAnswer::where('chat_id', $chat_id)->first();
-
-        if (!$record) {
-            return response()->json(['status' => 'error', 'message' => 'No answers found.'], 404);
+        foreach ($sectionKeys as $key) {
+            if (isset($answers[$key]) && !empty($answers[$key])) {
+                $count++;
+            }
         }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $record->answers,
-        ]);
+        return $count;
+    }
+
+    /**
+     * Get answers for a specific chat (for agents to view)
+     * GET /api/questionnaire/answers/{chat_id}
+     */
+    public function getAnswers($chatId)
+    {
+        try {
+            $answerRecord = QuestionnaireAnswer::where('chat_id', $chatId)
+                ->with(['user', 'chat'])
+                ->first();
+
+            if (!$answerRecord) {
+                return ResponseHelper::error('No answers found for this chat', 404);
+            }
+
+            return ResponseHelper::success([
+                'chat_id' => $answerRecord->chat_id,
+                'user_id' => $answerRecord->user_id,
+                'answers' => $answerRecord->answers,
+                'progress' => $answerRecord->progress,
+                'completed_sections' => $answerRecord->completed_sections,
+                'updated_at' => $answerRecord->updated_at
+            ], 'Answers fetched successfully', 200);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch answers: ' . $e->getMessage());
+            return ResponseHelper::error('Failed to fetch answers: ' . $e->getMessage(), 500);
+        }
     }
 }
