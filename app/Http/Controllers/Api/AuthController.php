@@ -7,6 +7,7 @@ use App\DTOs\Auth\ForgetPasswordDTO;
 use App\DTOs\Auth\LoginDTO;
 use App\DTOs\Auth\RegisterDTO;
 use App\DTOs\Auth\VerifyCodeDTO;
+use App\Helpers\ActivityLogger;
 use App\Helpers\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ChangePasswordRequest;
@@ -33,6 +34,9 @@ class AuthController extends Controller
                $dto = RegisterDTO::fromRequest($request); // ✅ Pass the request object, not validated array
                $user = $this->userService->register($dto);
 
+               // Log user activity
+               ActivityLogger::logRegistration($user['user']['id'] ?? null);
+
                return ResponseHelper::success($user);
           } catch (Exception $e) {
                return ResponseHelper::error($e->getMessage());
@@ -44,6 +48,10 @@ class AuthController extends Controller
                $dto = LoginDTO::fromRequest($request);
                $user = $this->userService->login($dto);
                NotificationService::sendToUserById($user['id'], 'Login Notification', 'You logged in successfully');
+               
+               // Log user activity
+               ActivityLogger::logLogin($user['id'] ?? null);
+               
                return ResponseHelper::success($user);
           } catch (Exception $e) {
                return ResponseHelper::error($e->getMessage());
@@ -74,6 +82,10 @@ class AuthController extends Controller
           try {
                $dto = ChangePasswordDTO::fromRequest($request);
                $this->userService->changePassword($dto);
+               
+               // Log user activity
+               ActivityLogger::logPasswordChange();
+               
                return ResponseHelper::success(null, 'Password changed successfully');
           } catch (Exception $e) {
                return ResponseHelper::error($e->getMessage());
@@ -85,6 +97,10 @@ class AuthController extends Controller
           try {
                $dto = $editRequest->validated();
               $user= $this->userService->editProfile($dto);
+              
+               // Log user activity
+               ActivityLogger::logProfileUpdate(array_keys($dto));
+               
                return ResponseHelper::success($user, 'Profile updated successfully');
           } catch (Exception $e) {
                return ResponseHelper::error($e->getMessage());

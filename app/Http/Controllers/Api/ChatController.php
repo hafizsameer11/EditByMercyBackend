@@ -6,6 +6,7 @@ use App\DTOs\ChatDTO;
 use App\DTOs\MessageDTO;
 use App\DTOs\OrderDTO;
 use App\Enums\UserRoles;
+use App\Helpers\ActivityLogger;
 use App\Helpers\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignAgentRequest;
@@ -84,6 +85,10 @@ class ChatController extends Controller
 
             // Load necessary relationships
             $message->load('sender', 'receiver', 'originalMessage');
+            
+            // Log user activity
+            ActivityLogger::logMessageSent($chatId, $messageDto->type);
+            
             try {
                 $senderName = optional($message->sender)->name ?? 'Someone';
                 $type       = (string) $sendMessageRequest->input('type');
@@ -205,6 +210,10 @@ class ChatController extends Controller
             if ($existingPendingOrder && $existingPendingOrder->chat) {
                 // User already has an active order for this service type
                 // Redirect them to the existing chat
+                
+                // Log user activity
+                ActivityLogger::log('chat_accessed', "Accessed existing chat for {$serviceType} service");
+                
                 return ResponseHelper::success(
                     new AssignedAgentViewModel($existingPendingOrder->chat),
                     'You already have an active order for this service. Please complete or close the current order before starting a new one.',
@@ -229,7 +238,10 @@ class ChatController extends Controller
                     service_type: $serviceType,
                     chat_id: $completedOrder->chat_id
                 );
-                $this->orderService->createOrder($newOrderDTO);
+                $newOrder = $this->orderService->createOrder($newOrderDTO);
+
+                // Log user activity
+                ActivityLogger::logOrderCreated($newOrder->id, $serviceType);
 
                 $data = $completedOrder->chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
                 return ResponseHelper::success(
@@ -250,13 +262,19 @@ class ChatController extends Controller
             );
             $chat = $this->chatService->createChat($chatDto);
 
+            // Log chat creation
+            ActivityLogger::logChatCreated($chat->id);
+
             $orderDto = new OrderDTO(
                 user_id: $authUserId,
                 agent_id: $agent->id ?? null,
                 service_type: $serviceType,
                 chat_id: $chat->id ?? null
             );
-            $this->orderService->createOrder($orderDto);
+            $order = $this->orderService->createOrder($orderDto);
+
+            // Log order creation
+            ActivityLogger::logOrderCreated($order->id, $serviceType);
 
             $data = $chat->load('participantA', 'participantB', 'agent', 'messages', 'order');
             return ResponseHelper::success(
@@ -299,6 +317,13 @@ class ChatController extends Controller
                 "type" => "payment"
 
             ]);
+            
+            // Log user activity
+            $order = Order::where('chat_id', $data['chat_id'])->latest()->first();
+            if ($order) {
+                ActivityLogger::logPaymentCreated($order->id, $data['amount'] ?? 0);
+            }
+            
             // $payment = $this->paymentService->createPayment($dto);
             return ResponseHelper::success($payment, 'Payment created successfully.', 201);
         } catch (\Exception $e) {
@@ -315,6 +340,10 @@ class ChatController extends Controller
         $order = Order::where('chat_id', $chatId)->orderBy('created_at', 'desc')->first();
         $order->payment_status = 'success';
         $order->save();
+        
+        // Log user activity
+        ActivityLogger::logPaymentStatusUpdated($order->id, 'success');
+        
         return ResponseHelper::success($order, 'Order updated successfully.');
     }
     public function updateOrderStatus(Request $request)
@@ -323,6 +352,10 @@ class ChatController extends Controller
         $order = Order::where('chat_id', $chatId)->orderBy('created_at', 'desc')->first();
         $order->status = $request->status;
         $order->save();
+        
+        // Log user activity
+        ActivityLogger::logOrderStatusUpdated($order->id, $request->status);
+        
         return ResponseHelper::success($order, 'Order updated successfully.');
     }
 
@@ -382,6 +415,10 @@ class ChatController extends Controller
                 'original_id' => $forwardMessageId
 
             ]);
+            
+            // Log user activity
+            ActivityLogger::logMessageForwarded($forwardMessageId, $receiverId);
+            
             // $message = $this->chatService->forwardMessage($request->all());
             return ResponseHelper::success($data, 'Message forwarded successfully.', 201);
         } catch (\Exception $e) {
@@ -400,6 +437,9 @@ class ChatController extends Controller
             $chat->is_deleted_by_user=true;
             $chat->save();
 
+            // Log user activity
+            ActivityLogger::logChatDeleted($id);
+
             return ResponseHelper::success(null, 'Chat deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Error deleting chat: ' . $e->getMessage(), [
@@ -415,6 +455,10 @@ class ChatController extends Controller
             $message=Message::where('id',$id)->first();
             $message->is_deleted=true;
             $message->save();
+            
+            // Log user activity
+            ActivityLogger::logMessageDeleted($id);
+            
             return ResponseHelper::success(null, 'Message deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Error deleting message: ' . $e->getMessage(), [
@@ -432,6 +476,10 @@ class ChatController extends Controller
             $message->message=$request->message;
             $message->is_edited=true;
             $message->save();
+            
+            // Log user activity
+            ActivityLogger::logMessageEdited($id);
+            
             return ResponseHelper::success(null, 'Message edited successfully.');
         } catch (\Exception $e) {
             Log::error('Error editing message: ' . $e->getMessage(), [
@@ -446,6 +494,10 @@ class ChatController extends Controller
             $message = Message::find($id);
             $message->is_downloaded = true;
             $message->save();
+            
+            // Log user activity
+            ActivityLogger::logFileDownloaded($id);
+            
             return ResponseHelper::success(null, 'Message downloaded successfully.');
         } catch (\Exception $e) {
             Log::error('Error downloading message: ' . $e->getMessage(), [

@@ -85,6 +85,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's activities.
+     */
+    public function activities()
+    {
+        return $this->hasMany(UserActivity::class, 'user_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
      * Check if user is online based on last activity.
      * User is considered online if they were active within the last 5 minutes.
      */

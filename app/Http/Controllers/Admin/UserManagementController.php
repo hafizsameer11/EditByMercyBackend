@@ -109,7 +109,67 @@ class UserManagementController extends Controller
     public function show($id)
     {
         try {
-            $user = User::with(['orders'])->withCount('orders')->findOrFail($id);
+            $user = User::with(['orders', 'activities'])
+                ->withCount('orders')
+                ->findOrFail($id);
+
+            // Get user's chats
+            $chats = Chat::where('user_id', $id)
+                ->orWhere('user_2_id', $id)
+                ->with(['participantA', 'participantB', 'agent'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Transform activities for frontend
+            $activities = $user->activities->map(function ($activity) {
+                return [
+                    'id' => $activity->id,
+                    'activity' => $activity->activity,
+                    'description' => $activity->description,
+                    'ip_address' => $activity->ip_address,
+                    'user_agent' => $activity->user_agent,
+                    'metadata' => $activity->metadata,
+                    'created_at' => $activity->created_at->format('m/d/y - h:i A'),
+                    'created_at_timestamp' => $activity->created_at->timestamp,
+                    'time_ago' => $activity->created_at->diffForHumans(),
+                ];
+            });
+
+            // Transform chats for frontend
+            $transformedChats = $chats->map(function ($chat) use ($user) {
+                $otherUser = $chat->user_id === $user->id ? $chat->participantB : $chat->participantA;
+                $lastMessage = $chat->messages()->latest()->first();
+                
+                return [
+                    'id' => $chat->id,
+                    'type' => $chat->type,
+                    'other_user' => $otherUser ? [
+                        'id' => $otherUser->id,
+                        'name' => $otherUser->name,
+                        'profile_picture' => $otherUser->profile_picture,
+                    ] : null,
+                    'agent' => $chat->agent ? [
+                        'id' => $chat->agent->id,
+                        'name' => $chat->agent->name,
+                    ] : null,
+                    'last_message' => $lastMessage ? $lastMessage->message : null,
+                    'last_message_time' => $lastMessage ? $lastMessage->created_at->diffForHumans() : null,
+                    'created_at' => $chat->created_at->format('m/d/y - h:i A'),
+                ];
+            });
+
+            // Transform orders for frontend
+            $transformedOrders = $user->orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'service_type' => $order->service_type,
+                    'status' => $order->status,
+                    'payment_status' => $order->payment_status ?? 'pending',
+                    'total_amount' => $order->total_amount ?? 0,
+                    'created_at' => $order->created_at->format('m/d/y - h:i A'),
+                    'updated_at' => $order->updated_at->format('m/d/y - h:i A'),
+                ];
+            });
 
             $data = [
                 'id' => $user->id,
@@ -125,6 +185,9 @@ class UserManagementController extends Controller
                 'date_registered' => $user->created_at->format('m/d/y - h:i A'),
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
+                'activities' => $activities,
+                'chats' => $transformedChats,
+                'orders' => $transformedOrders,
             ];
 
             return ResponseHelper::success($data, 'User details fetched successfully', 200);
@@ -405,41 +468,59 @@ class UserManagementController extends Controller
     public function getUserActivity($id)
     {
         try {
-            $user = User::findOrFail($id);
+            $user = User::with('activities')->findOrFail($id);
 
-            // Get recent activities
-            $activities = [];
-
-            // Orders activity
-            $orders = Order::where('user_id', $id)
-                ->orderBy('created_at', 'desc')
-                ->limit(10)
-                ->get();
-
-            foreach ($orders as $order) {
-                $activities[] = [
-                    'type' => 'order',
-                    'activity' => $user->name . ' created an order',
-                    'details' => 'Service: ' . $order->service_type . ' - Amount: N' . number_format($order->total_amount, 2),
-                    'date' => $order->created_at->format('m/d/y - h:i A'),
-                    'timestamp' => $order->created_at,
+            // Get user activities from database with pagination
+            $activities = $user->activities->map(function ($activity) {
+                return [
+                    'id' => $activity->id,
+                    'type' => $activity->activity,
+                    'activity' => $activity->description ?? ucwords(str_replace('_', ' ', $activity->activity)),
+                    'details' => $this->formatActivityDetails($activity),
+                    'date' => $activity->created_at->format('m/d/y - h:i A'),
+                    'time_ago' => $activity->created_at->diffForHumans(),
+                    'ip_address' => $activity->ip_address,
+                    'metadata' => $activity->metadata,
                 ];
-            }
-
-            // Sort by timestamp
-            usort($activities, function ($a, $b) {
-                return $b['timestamp'] <=> $a['timestamp'];
             });
-
-            // Remove timestamp from response
-            $activities = array_map(function ($activity) {
-                unset($activity['timestamp']);
-                return $activity;
-            }, $activities);
 
             return ResponseHelper::success($activities, 'User activity fetched successfully', 200);
         } catch (\Exception $e) {
             return ResponseHelper::error('Failed to fetch user activity: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Format activity details based on activity type and metadata
+     */
+    private function formatActivityDetails($activity)
+    {
+        $metadata = $activity->metadata;
+        
+        switch ($activity->activity) {
+            case 'message_sent':
+                return isset($metadata['message_type']) 
+                    ? "Sent a {$metadata['message_type']} message" 
+                    : "Sent a message";
+            
+            case 'order_created':
+                return isset($metadata['service_type']) 
+                    ? "Created order for {$metadata['service_type']}" 
+                    : "Created an order";
+            
+            case 'payment_created':
+                return isset($metadata['amount']) 
+                    ? "Created payment of \$" . number_format($metadata['amount'], 2) 
+                    : "Created a payment";
+            
+            case 'order_status_updated':
+            case 'payment_status_updated':
+                return isset($metadata['status']) 
+                    ? "Updated to {$metadata['status']}" 
+                    : "Status updated";
+            
+            default:
+                return $activity->description ?? ucwords(str_replace('_', ' ', $activity->activity));
         }
     }
 
