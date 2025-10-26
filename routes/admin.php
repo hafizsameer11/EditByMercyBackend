@@ -25,12 +25,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['auth:sanctum'])->group(function () {
-    
-    // ============================================
-    // Dashboard Routes
-    // ============================================
+
+Route::prefix('admin')->group(function(){
     Route::get('/dashboard', [DashboardController::class, 'index']);
-    
+
     // ============================================
     // User Management Routes
     // ============================================
@@ -41,16 +39,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}', [UserManagementController::class, 'update']); // Update user
         Route::delete('/{id}', [UserManagementController::class, 'destroy']); // Delete user
         Route::post('/{id}/toggle-block', [UserManagementController::class, 'toggleBlock']); // Block/Unblock user
-        
+
         // User specific data
         Route::get('/{id}/chats', [UserManagementController::class, 'getUserChats']); // Get user's chats
         Route::get('/{id}/orders', [UserManagementController::class, 'getUserOrders']); // Get user's orders
         Route::get('/{id}/activity', [UserManagementController::class, 'getUserActivity']); // Get user's activity
     });
-    
+
     // Legacy user creation endpoint (kept for backward compatibility)
     Route::post('/create-user', [UserController::class, 'createUser']);
-    
+
     // ============================================
     // Chats Management Routes
     // ============================================
@@ -58,13 +56,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [ChatsController::class, 'index']); // Get all chats
         Route::get('/{id}', [ChatsController::class, 'show']); // Get single chat with messages
         Route::delete('/{id}', [ChatsController::class, 'destroy']); // Delete chat
-        
+
         // Chat actions
         Route::post('/{id}/new-order', [ChatsController::class, 'createNewOrder']); // Create new order in chat
         Route::get('/available/list', [ChatsController::class, 'getAvailableChats']); // Get chats for sharing
         Route::post('/share', [ChatsController::class, 'shareToChat']); // Share/forward to chat
     });
-    
+
     // ============================================
     // Orders Management Routes
     // ============================================
@@ -73,15 +71,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{id}', [OrdersController::class, 'show']); // Get single order details
         Route::put('/{id}', [OrdersController::class, 'update']); // Update order details
         Route::delete('/{id}', [OrdersController::class, 'destroy']); // Delete order
-        
+
         // Order status updates
         Route::patch('/{id}/status', [OrdersController::class, 'updateStatus']); // Update order status
         Route::patch('/{id}/payment-status', [OrdersController::class, 'updatePaymentStatus']); // Update payment status
-        
+
         // Bulk actions
         Route::post('/bulk-update', [OrdersController::class, 'bulkUpdate']); // Bulk update orders
     });
-    
+
     // ============================================
     // Transactions Management Routes
     // ============================================
@@ -91,7 +89,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::patch('/{id}/status', [TransactionsController::class, 'updateStatus']); // Update status
         Route::get('/export/data', [TransactionsController::class, 'export']); // Export transactions
     });
-    
+
     // ============================================
     // Manage Admin Routes
     // ============================================
@@ -103,7 +101,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [ManageAdminController::class, 'destroy']); // Delete admin
         Route::post('/bulk-action', [ManageAdminController::class, 'bulkAction']); // Bulk actions
     });
-    
+
     // ============================================
     // Notifications Management Routes
     // ============================================
@@ -114,7 +112,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/users', [NotificationsController::class, 'getUsers']); // Get users for targeting
         Route::delete('/{id}', [NotificationsController::class, 'destroy']); // Delete notification
     });
-    
+
     // ============================================
     // Banners/Feed Management Routes
     // ============================================
@@ -124,12 +122,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [BannersController::class, 'store']); // Create new banner
         Route::put('/{id}', [BannersController::class, 'update']); // Update banner
         Route::delete('/{id}', [BannersController::class, 'destroy']); // Delete banner
-        
+
         // Categories
         Route::get('/categories/list', [BannersController::class, 'getCategories']); // Get categories
         Route::post('/categories/create', [BannersController::class, 'createCategory']); // Create category
     });
-    
+
     // ============================================
     // Questionnaire Management Routes
     // ============================================
@@ -141,17 +139,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{id}', [QuestionnaireManagementController::class, 'update']); // Update questionnaire
         Route::delete('/{id}', [QuestionnaireManagementController::class, 'destroy']); // Delete questionnaire
         Route::post('/{id}/toggle-status', [QuestionnaireManagementController::class, 'toggleStatus']); // Toggle active status
-        
+
         // Questions Management
         Route::post('/{id}/questions', [QuestionnaireManagementController::class, 'addQuestion']); // Add question to questionnaire
         Route::put('/questions/{questionId}', [QuestionnaireManagementController::class, 'updateQuestion']); // Update question
         Route::delete('/questions/{questionId}', [QuestionnaireManagementController::class, 'deleteQuestion']); // Delete question
         Route::post('/{id}/reorder-questions', [QuestionnaireManagementController::class, 'reorderQuestions']); // Reorder questions
-        
+
         // Helper Routes
         Route::get('/meta/question-types', [QuestionnaireManagementController::class, 'getQuestionTypes']); // Get available question types
     });
-    
+
     // ============================================
     // Old Questionnaire Routes (Legacy - Keep for backward compatibility)
     // ============================================
@@ -159,6 +157,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [QuestionareController::class, 'storeOrUpdateQuestionnaire']);
         Route::get('/', [QuestionareController::class, 'getQuestionnaire']);
     });
+});
+    // ============================================
+    // Dashboard Routes
+    // ============================================
     
 });
-
