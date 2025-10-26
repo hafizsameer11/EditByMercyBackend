@@ -451,14 +451,23 @@ All admin routes require authentication using Laravel Sanctum.
     "chats": [
       {
         "id": 1,
-        "user_name": "John Doe",
         "agent_name": "Agent Smith",
-        "service_type": "Body Retouching",
-        "last_message": "Hello, I need help",
-        "last_message_time": "2 minutes ago",
+        "agent_profile": "https://example.com/storage/profile_picture/agent.jpg",
+        "service": "Body Retouching",
+        "order_amount": "N150.00",
+        "no_of_photos": 5,
+        "date": "10/26/25 - 10:00 AM",
+        "status": "pending",
         "unread_count": 3,
-        "status": "active",
-        "created_at": "10/26/25 - 10:00 AM"
+        "has_questionnaire": true,
+        "chat_id": 1,
+        "last_message": {
+          "id": 123,
+          "message": "Hello, I need help",
+          "type": "text",
+          "created_at": "10/26/25 - 02:30 PM",
+          "time_ago": "2 minutes ago"
+        }
       }
     ],
     "pagination": {

@@ -102,6 +102,13 @@ class ChatsController extends Controller
                     'unread_count' => $chat->unread_count ?? 0,
                     'has_questionnaire' => $chat->messages()->where('type', 'questionnaire')->exists(),
                     'chat_id' => $chat->id,
+                    'last_message' => $lastMessage ? [
+                        'id' => $lastMessage->id,
+                        'message' => $lastMessage->message,
+                        'type' => $lastMessage->type,
+                        'created_at' => $lastMessage->created_at->format('m/d/y - h:i A'),
+                        'time_ago' => $lastMessage->created_at->diffForHumans(),
+                    ] : null,
                 ];
             });
 
