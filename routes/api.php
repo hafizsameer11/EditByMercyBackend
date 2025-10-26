@@ -158,9 +158,9 @@ Route::middleware(['auth:sanctum', 'track.activity'])->group(function () {
 });
 
 // Admin Routes - Loaded from separate file
-Route::prefix('admin')->group(function () {
-    require __DIR__.'/admin.php';
-});
+// Route::prefix('admin')->group(function () {
+// });
+require __DIR__.'/admin.php';
 
 Route::post('auth/social/{provider}', [SocialAuthController::class, 'loginWithToken'])
     ->whereIn('provider', ['google', 'facebook']);
