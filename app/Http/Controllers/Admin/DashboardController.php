@@ -150,23 +150,47 @@ class DashboardController extends Controller
                 ->whereBetween('created_at', [$yearStart, $yearEnd])
                 ->count();
 
-            $usersByMonth = User::where('role', 'user')
+            $usersByMonthRaw = User::where('role', 'user')
                 ->whereBetween('created_at', [$yearStart, $yearEnd])
-                ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-                ->groupBy('month')
+                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
+                ->groupBy('year', 'month')
+                ->orderBy('year')
                 ->orderBy('month')
                 ->get();
+
+            $usersByMonth = $usersByMonthRaw->map(function ($row) {
+                $date = now()->setYear($row->year)->setMonth($row->month)->startOfMonth();
+                return [
+                    'year' => (int) $row->year,
+                    'month' => (int) $row->month,
+                    'label' => $date->format('M'),
+                    'timestamp' => $date->toDateString(),
+                    'count' => (int) $row->count,
+                ];
+            });
 
             // Orders analytics
             $ordersToday = Order::whereBetween('created_at', [$todayStart, $todayEnd])->count();
             $ordersThisMonth = Order::whereBetween('created_at', [$monthStart, $monthEnd])->count();
             $ordersThisYear = Order::whereBetween('created_at', [$yearStart, $yearEnd])->count();
 
-            $ordersByMonth = Order::whereBetween('created_at', [$yearStart, $yearEnd])
-                ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-                ->groupBy('month')
+            $ordersByMonthRaw = Order::whereBetween('created_at', [$yearStart, $yearEnd])
+                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as count')
+                ->groupBy('year', 'month')
+                ->orderBy('year')
                 ->orderBy('month')
                 ->get();
+
+            $ordersByMonth = $ordersByMonthRaw->map(function ($row) {
+                $date = now()->setYear($row->year)->setMonth($row->month)->startOfMonth();
+                return [
+                    'year' => (int) $row->year,
+                    'month' => (int) $row->month,
+                    'label' => $date->format('M'),
+                    'timestamp' => $date->toDateString(),
+                    'count' => (int) $row->count,
+                ];
+            });
 
             // Revenue / Transactions analytics
             $revenueToday = Transaction::where('status', 'success')
@@ -181,12 +205,24 @@ class DashboardController extends Controller
                 ->whereBetween('created_at', [$yearStart, $yearEnd])
                 ->sum('amount');
 
-            $revenueByMonth = Transaction::where('status', 'success')
+            $revenueByMonthRaw = Transaction::where('status', 'success')
                 ->whereBetween('created_at', [$yearStart, $yearEnd])
-                ->selectRaw('MONTH(created_at) as month, SUM(amount) as total_amount')
-                ->groupBy('month')
+                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(amount) as total_amount')
+                ->groupBy('year', 'month')
+                ->orderBy('year')
                 ->orderBy('month')
                 ->get();
+
+            $revenueByMonth = $revenueByMonthRaw->map(function ($row) {
+                $date = now()->setYear($row->year)->setMonth($row->month)->startOfMonth();
+                return [
+                    'year' => (int) $row->year,
+                    'month' => (int) $row->month,
+                    'label' => $date->format('M'),
+                    'timestamp' => $date->toDateString(),
+                    'total_amount' => (float) $row->total_amount,
+                ];
+            });
 
             // Bottom cards (activity tab style)
             // We don't have soft deletes on users table, so treat "deleted accounts" as blocked users
