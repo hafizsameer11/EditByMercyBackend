@@ -28,6 +28,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index']);
+        Route::get('/analytics', [DashboardController::class, 'analytics']); // Detailed analytics (users, orders, revenue)
 
         // ============================================
         // User Management Routes

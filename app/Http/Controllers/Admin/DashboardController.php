@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Chat;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -111,6 +112,133 @@ class DashboardController extends Controller
             return ResponseHelper::success($dashboardData, 'Dashboard data fetched successfully', 200);
         } catch (\Exception $e) {
             return ResponseHelper::error('Failed to fetch dashboard data: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get detailed analytics (users, orders, revenue) with time ranges
+     */
+    public function analytics(Request $request)
+    {
+        try {
+            // Base totals
+            $totalUsers = User::where('role', 'user')->count();
+
+            $amountGenerated = Order::where('payment_status', 'success')
+                ->sum('total_amount');
+
+            // Time ranges
+            $todayStart = now()->startOfDay();
+            $todayEnd   = now()->endOfDay();
+
+            $monthStart = now()->startOfMonth();
+            $monthEnd   = now()->endOfMonth();
+
+            $yearStart  = now()->startOfYear();
+            $yearEnd    = now()->endOfYear();
+
+            // Users analytics
+            $usersToday = User::where('role', 'user')
+                ->whereBetween('created_at', [$todayStart, $todayEnd])
+                ->count();
+
+            $usersThisMonth = User::where('role', 'user')
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->count();
+
+            $usersThisYear = User::where('role', 'user')
+                ->whereBetween('created_at', [$yearStart, $yearEnd])
+                ->count();
+
+            $usersByMonth = User::where('role', 'user')
+                ->whereBetween('created_at', [$yearStart, $yearEnd])
+                ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+
+            // Orders analytics
+            $ordersToday = Order::whereBetween('created_at', [$todayStart, $todayEnd])->count();
+            $ordersThisMonth = Order::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+            $ordersThisYear = Order::whereBetween('created_at', [$yearStart, $yearEnd])->count();
+
+            $ordersByMonth = Order::whereBetween('created_at', [$yearStart, $yearEnd])
+                ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+
+            // Revenue / Transactions analytics
+            $revenueToday = Transaction::where('status', 'success')
+                ->whereBetween('created_at', [$todayStart, $todayEnd])
+                ->sum('amount');
+
+            $revenueThisMonth = Transaction::where('status', 'success')
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->sum('amount');
+
+            $revenueThisYear = Transaction::where('status', 'success')
+                ->whereBetween('created_at', [$yearStart, $yearEnd])
+                ->sum('amount');
+
+            $revenueByMonth = Transaction::where('status', 'success')
+                ->whereBetween('created_at', [$yearStart, $yearEnd])
+                ->selectRaw('MONTH(created_at) as month, SUM(amount) as total_amount')
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+
+            // Bottom cards (activity tab style)
+            $deletedAccounts = User::whereNotNull('deleted_at')->count();
+
+            $onlineUsers = User::where('role', 'user')
+                ->whereNotNull('fcmToken')
+                ->count();
+
+            $activeUsers = User::whereHas('orders', function ($q) {
+                $q->where('created_at', '>=', now()->subDays(30));
+            })->count();
+
+            $usersWithNoOrders = User::where('role', 'user')
+                ->doesntHave('orders')
+                ->count();
+            $bounceRate = $totalUsers > 0 ? round(($usersWithNoOrders / $totalUsers) * 100) : 0;
+
+            $data = [
+                'analytics' => [
+                    'users' => [
+                        'today' => $usersToday,
+                        'month' => $usersThisMonth,
+                        'year' => $usersThisYear,
+                        'by_month' => $usersByMonth,
+                    ],
+                    'orders' => [
+                        'today' => $ordersToday,
+                        'month' => $ordersThisMonth,
+                        'year' => $ordersThisYear,
+                        'by_month' => $ordersByMonth,
+                    ],
+                    'revenue' => [
+                        'today' => $revenueToday,
+                        'month' => $revenueThisMonth,
+                        'year' => $revenueThisYear,
+                        'by_month' => $revenueByMonth,
+                    ],
+                ],
+                'activity_cards' => [
+                    'total_users' => $totalUsers,
+                    'online_users' => $onlineUsers,
+                    'active_users' => $activeUsers,
+                    'bounce_rate' => $bounceRate,
+                    'deleted_accounts' => $deletedAccounts,
+                    'total_revenue' => $amountGenerated,
+                    'total_revenue_formatted' => 'N' . number_format($amountGenerated, 2),
+                ],
+            ];
+
+            return ResponseHelper::success($data, 'Analytics data fetched successfully', 200);
+        } catch (\Exception $e) {
+            return ResponseHelper::error('Failed to fetch analytics data: ' . $e->getMessage(), 500);
         }
     }
 

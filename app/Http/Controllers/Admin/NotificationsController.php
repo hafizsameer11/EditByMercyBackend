@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Helpers\ResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Models\SystemNotification;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -15,13 +16,12 @@ use Illuminate\Support\Facades\Validator;
 class NotificationsController extends Controller
 {
     /**
-     * Get all sent notifications
+     * Get all system notifications (admin broadcast list)
      */
     public function index(Request $request)
     {
         try {
-            $query = Notification::with('user:id,name,profile_picture')
-                ->orderBy('created_at', 'desc');
+            $query = SystemNotification::orderBy('created_at', 'desc');
 
             // Search
             if ($request->has('search') && $request->search) {
@@ -43,14 +43,10 @@ class NotificationsController extends Controller
             $transformedNotifications = $notifications->getCollection()->map(function ($notification) {
                 return [
                     'id' => $notification->id,
-                    'user' => [
-                        'id' => $notification->user->id ?? null,
-                        'name' => $notification->user->name ?? 'All Users',
-                        'profile_picture' => $notification->user->profile_picture ?? null,
-                    ],
                     'title' => $notification->title,
                     'content' => $notification->content,
-                    'is_read' => $notification->is_read ?? false,
+                    'image_path' => $notification->image_path ? asset('storage/' . $notification->image_path) : null,
+                    'recipient_type' => $notification->recipient_type,
                     'created_at' => $notification->created_at->format('m/d/y - h:i A'),
                 ];
             });
@@ -94,6 +90,15 @@ class NotificationsController extends Controller
                 $imagePath = $request->file('image')->store('notifications', 'public');
             }
 
+            // Create system notification record (admin broadcast record)
+            $systemNotification = SystemNotification::create([
+                'title' => $request->subject,
+                'content' => $request->message,
+                'image_path' => $imagePath,
+                'recipient_type' => $request->recipient_type,
+                'created_by' => Auth::id(),
+            ]);
+
             // Determine recipients
             $recipients = [];
             if ($request->recipient_type === 'all') {
@@ -105,10 +110,10 @@ class NotificationsController extends Controller
             $sentCount = 0;
             $failedCount = 0;
 
-            // Send notifications to each recipient
+            // Send notifications to each recipient (user app modal + push)
             foreach ($recipients as $user) {
                 try {
-                    // Create notification in database
+                    // Create in-app notification for user
                     Notification::create([
                         'user_id' => $user->id,
                         'title' => $request->subject,
@@ -134,6 +139,7 @@ class NotificationsController extends Controller
                 'failed_count' => $failedCount,
                 'total_recipients' => count($recipients),
                 'image_path' => $imagePath ? asset('storage/' . $imagePath) : null,
+                'system_notification_id' => $systemNotification->id,
             ], 'Notifications sent successfully', 201);
         } catch (\Exception $e) {
             return ResponseHelper::error('Failed to send notifications: ' . $e->getMessage(), 500);
@@ -185,7 +191,7 @@ class NotificationsController extends Controller
     public function destroy($id)
     {
         try {
-            $notification = Notification::findOrFail($id);
+            $notification = SystemNotification::findOrFail($id);
             $notification->delete();
 
             return ResponseHelper::success(null, 'Notification deleted successfully', 200);
