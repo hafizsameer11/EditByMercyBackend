@@ -20,7 +20,8 @@ class QuestionnaireManagementController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Questionnaire::withCount('questions')
+            $query = Questionnaire::with(['questions'])
+                ->withCount('questions')
                 ->orderBy('order');
 
             // Filter by active status
@@ -43,6 +44,19 @@ class QuestionnaireManagementController extends Controller
                     'is_active' => $questionnaire->is_active,
                     'questions_count' => $questionnaire->questions_count,
                     'created_at' => $questionnaire->created_at->format('m/d/y - h:i A'),
+                    // Section questions + answers (options)
+                    'questions' => $questionnaire->questions->map(function ($question) {
+                        return [
+                            'id' => $question->id,
+                            'type' => $question->type,
+                            'label' => $question->label,
+                            // "answers" = options list that frontend shows as choices
+                            'options' => $question->options ?? [],
+                            'state_key' => $question->state_key,
+                            'order' => $question->order,
+                            'is_required' => $question->is_required,
+                        ];
+                    }),
                 ];
             });
 
