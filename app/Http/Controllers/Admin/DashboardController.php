@@ -189,7 +189,10 @@ class DashboardController extends Controller
                 ->get();
 
             // Bottom cards (activity tab style)
-            $deletedAccounts = User::whereNotNull('deleted_at')->count();
+            // We don't have soft deletes on users table, so treat "deleted accounts" as blocked users
+            $deletedAccounts = User::where('role', 'user')
+                ->where('is_blocked', true)
+                ->count();
 
             $onlineUsers = User::where('role', 'user')
                 ->whereNotNull('fcmToken')
