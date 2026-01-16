@@ -26,29 +26,30 @@ class ChatRepository
         return null;
     }
     // public function 
-  public function getChatByUserId(int $userId, ?string $role = null)
-{
-    $query = Chat::where('user_id', $userId)
-        ->orWhere('user_2_id', $userId)
-        ->with(['messages', 'participantA', 'participantB', 'agent', 'order'])
-        ->withCount([
-            'messages as unread_count' => function ($query) use ($userId) {
-                $query->where('is_read', 0)
-                      ->where('sender_id', '!=', $userId); // exclude user's own messages
-            }
-        ])
-        ->where('is_deleted_by_user', 0)
-        ->orderBy('created_at', 'desc');
+    public function getChatByUserId(int $userId, ?string $role = null)
+    {
+        return Chat::where(function ($q) use ($userId) {
+                $q->where('user_id', $userId)
+                  ->orWhere('user_2_id', $userId);
+            })
+            ->where('is_deleted_by_user', 0)
+            ->with([
+                'messages',
+                'participantA',
+                'participantB',
+                'agent',
+                'order'
+            ])
+            ->withCount([
+                'messages as unread_count' => function ($q) use ($userId) {
+                    $q->where('is_read', 0)
+                      ->where('sender_id', '!=', $userId);
+                }
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
     
-    // Only filter deleted chats if role is 'user'
-    // if ($role === 'user') {
-    //     $query->where('is_deleted_by_user', 0);
-    // }
-    
-    $chats = $query->get();
-    // Log::info("chats are",[$chats->toArray()]);
-    return $chats;
-}
 
     public function getChatByUserIdSIngle(int $userId)
     {
