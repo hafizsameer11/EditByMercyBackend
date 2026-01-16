@@ -391,33 +391,53 @@ class ChatController extends Controller
         try {
             $forwardMessageId = $request->original_message_id;
             $receiverId = $request->receiver_id;
-          
+            $senderId = Auth::id();
 
-            $chatById = $this->chatService->getChatByUserIdSIngle($request->receiver_id);
+            // Validate original message exists
             $originalMessage = Message::find($forwardMessageId);
-            //
-              $data = [
+            if (!$originalMessage) {
+                return ResponseHelper::error('Original message not found.', 404);
+            }
+
+            // Find or create chat between sender and receiver
+            $chatById = Chat::where(function ($query) use ($senderId, $receiverId) {
+                $query->where('user_id', $senderId)->where('user_2_id', $receiverId);
+            })->orWhere(function ($query) use ($senderId, $receiverId) {
+                $query->where('user_id', $receiverId)->where('user_2_id', $senderId);
+            })->first();
+
+            // If no chat exists, create one
+            if (!$chatById) {
+                $chatDto = new ChatDTO(
+                    type: 'agent-agent', // or determine appropriate type based on user roles
+                    user_id: $senderId,
+                    user_2_id: $receiverId,
+                    agent_id: null
+                );
+                $chatById = $this->chatService->createChat($chatDto);
+            }
+
+            $data = [
                 'original_message_id' => $forwardMessageId,
                 'receiver_id' => $receiverId,
-                'chatId'=>$chatById->id,
+                'chatId' => $chatById->id,
                 'chat' => $chatById
             ];
+            
             $newMessage = Message::create([
                 'chat_id' => $chatById->id,
-                'sender_id' => Auth::id(),
+                'sender_id' => $senderId,
                 'receiver_id' => $receiverId,
                 'message' => $originalMessage->message,
                 'type' => $originalMessage->type,
                 'file' => $originalMessage->file,
                 'is_forwarded' => 1,
                 'original_id' => $forwardMessageId
-
             ]);
             
             // Log user activity
             ActivityLogger::logMessageForwarded($forwardMessageId, $receiverId);
             
-            // $message = $this->chatService->forwardMessage($request->all());
             return ResponseHelper::success($data, 'Message forwarded successfully.', 201);
         } catch (\Exception $e) {
             Log::error('Error forwarding message: ' . $e->getMessage(), [
