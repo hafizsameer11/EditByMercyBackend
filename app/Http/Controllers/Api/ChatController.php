@@ -295,7 +295,9 @@ class ChatController extends Controller
     {
         try {
             $userId = Auth::id();
-            $chats = $this->chatService->getChatByUserId($userId);
+            $user = Auth::user();
+            $role = $user ? $user->role : null;
+            $chats = $this->chatService->getChatByUserId($userId, $role);
             return ResponseHelper::success(ChatResource::collection($chats), 'Chats fetched successfully.');
         } catch (\Exception $e) {
             Log::error('Error fetching chats: ' . $e->getMessage(), [
@@ -376,8 +378,9 @@ class ChatController extends Controller
     public function getChatWithUserByUserId($userId)
     {
         try {
-
-            $chats = $this->chatService->getChatByUserId($userId);
+            $user = Auth::user();
+            $role = $user ? $user->role : null;
+            $chats = $this->chatService->getChatByUserId($userId, $role);
             return ResponseHelper::success(ChatResource::collection($chats), 'Chats fetched successfully.');
         } catch (\Exception $e) {
             Log::error('Error fetching chats: ' . $e->getMessage(), [

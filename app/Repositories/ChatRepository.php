@@ -26,9 +26,9 @@ class ChatRepository
         return null;
     }
     // public function 
-  public function getChatByUserId(int $userId)
+  public function getChatByUserId(int $userId, ?string $role = null)
 {
-    $chats= Chat::where('user_id', $userId)
+    $query = Chat::where('user_id', $userId)
         ->orWhere('user_2_id', $userId)
         ->with(['messages', 'participantA', 'participantB', 'agent', 'order'])
         ->withCount([
@@ -37,10 +37,16 @@ class ChatRepository
                       ->where('sender_id', '!=', $userId); // exclude user's own messages
             }
         ])
-        ->orderBy('created_at', 'desc')
-        ->get();
-        // Log::info("chats are",[$chats->toArray()]);
-        return $chats;
+        ->orderBy('created_at', 'desc');
+    
+    // Only filter deleted chats if role is 'user'
+    if ($role === 'user') {
+        $query->where('is_deleted_by_user', 0);
+    }
+    
+    $chats = $query->get();
+    // Log::info("chats are",[$chats->toArray()]);
+    return $chats;
 }
 
     public function getChatByUserIdSIngle(int $userId)

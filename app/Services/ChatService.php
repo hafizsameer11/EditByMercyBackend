@@ -57,10 +57,10 @@ class ChatService
             throw $e;
         }
     }
-    public function getChatByUserId(int $userId)
+    public function getChatByUserId(int $userId, ?string $role = null)
     {
         try {
-            return $this->chatRepository->getChatByUserId($userId);
+            return $this->chatRepository->getChatByUserId($userId, $role);
         } catch (Exception $e) {
             throw $e;
         }
