@@ -37,12 +37,13 @@ class ChatRepository
                       ->where('sender_id', '!=', $userId); // exclude user's own messages
             }
         ])
+        ->where('is_deleted_by_user', 0)
         ->orderBy('created_at', 'desc');
     
     // Only filter deleted chats if role is 'user'
-    if ($role === 'user') {
-        $query->where('is_deleted_by_user', 0);
-    }
+    // if ($role === 'user') {
+    //     $query->where('is_deleted_by_user', 0);
+    // }
     
     $chats = $query->get();
     // Log::info("chats are",[$chats->toArray()]);
