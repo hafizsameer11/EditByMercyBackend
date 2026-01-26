@@ -197,21 +197,18 @@ class ChatController extends Controller
         try {
             $authUserId = Auth::id();
             $serviceType = $request->input('service_type');
-
-            // STEP 1: Check if user already has a pending/active order for this service type
-            // This ensures only ONE active chat per service category
             $existingPendingOrder = Order::where('user_id', $authUserId)
                 ->where('service_type', $serviceType)
-                ->whereIn('status', ['pending', 'processing']) // Not closed yet
-                ->whereHas('chat') // Make sure chat still exists
+                ->whereIn('status', ['pending', 'processing']) 
+                ->whereHas('chat', function($query) {
+                    $query->where('is_deleted_by_user', false)
+                          ->where('is_deleted_by_admin', false);
+                }) 
                 ->with(['chat.participantA', 'chat.participantB', 'chat.agent', 'chat.messages', 'chat.order'])
                 ->first();
 
             if ($existingPendingOrder && $existingPendingOrder->chat) {
-                // User already has an active order for this service type
-                // Redirect them to the existing chat
-                
-                // Log user activity
+              
                 ActivityLogger::log('chat_accessed', "Accessed existing chat for {$serviceType} service");
                 
                 return ResponseHelper::success(
@@ -225,7 +222,10 @@ class ChatController extends Controller
             $completedOrder = Order::where('user_id', $authUserId)
                 ->where('service_type', $serviceType)
                 ->where('status', 'success')
-                ->whereHas('chat') // Make sure chat still exists
+                ->whereHas('chat', function($query) {
+                    $query->where('is_deleted_by_user', false)
+                          ->where('is_deleted_by_admin', false);
+                }) // Make sure chat still exists and is not deleted
                 ->with('chat')
                 ->latest()
                 ->first();
