@@ -110,6 +110,7 @@ Route::middleware(['auth:sanctum', 'track.activity'])->group(function () {
     Route::post('/assign-agent', [ChatController::class, 'assignAgent']);
     Route::get('/chat/{id}', [ChatController::class, 'getChatMessages']);
     Route::get('/chats', [ChatController::class, 'getChats']);
+    Route::get('/messages/media', [ChatController::class, 'getUserMedia']);
     //routes for handling payment with order
     Route::post('/create-payment', [ChatController::class, 'createPayment']);
     Route::post('/update-payment', [ChatController::class, 'updatePayment']);

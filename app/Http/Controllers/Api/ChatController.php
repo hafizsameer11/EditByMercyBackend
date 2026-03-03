@@ -306,6 +306,52 @@ class ChatController extends Controller
             return ResponseHelper::error('An error occurred while fetching chats.' . $e->getMessage(), 500);
         }
     }
+
+    public function getUserMedia(Request $request)
+    {
+        try {
+            $userId = Auth::id();
+
+            $defaultTypes = ['image', 'video', 'file', 'voice'];
+            $types = $request->input('types', $defaultTypes);
+
+            if (is_string($types)) {
+                $types = array_map('trim', explode(',', $types));
+            }
+
+            if (!is_array($types)) {
+                $types = $defaultTypes;
+            }
+
+            $types = array_values(array_filter($types));
+            if (empty($types)) {
+                $types = $defaultTypes;
+            }
+
+            $messages = Message::query()
+                ->where(function ($query) use ($userId) {
+                    $query->where('sender_id', $userId)
+                        ->orWhere('receiver_id', $userId);
+                })
+                ->whereIn('type', $types)
+                ->where('is_deleted', false)
+                ->with(['sender', 'receiver', 'originalMessage', 'replyTo:id,chat_id,type,message'])
+                ->latest('id')
+                ->get();
+
+            return ResponseHelper::success([
+                'types' => $types,
+                'messages' => MessageResource::collection($messages),
+            ], 'Media messages fetched successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error fetching media messages: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+            ]);
+
+            return ResponseHelper::error('An error occurred while fetching media messages.', 500);
+        }
+    }
     public function createPayment(CreatePaymentRequest $request)
     {
         try {
